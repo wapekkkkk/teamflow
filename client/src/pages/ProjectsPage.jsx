@@ -3,6 +3,17 @@ import { useNavigate } from "react-router-dom";
 import { supabase } from "../lib/supabaseClient";
 import AppLayout from "../components/AppLayout";
 
+const PROJECT_COLORS = [
+  "purple",
+  "blue",
+  "red",
+  "green",
+  "orange",
+  "pink",
+  "teal",
+  "yellow",
+];
+
 function ProjectsPage() {
   const navigate = useNavigate();
 
@@ -12,6 +23,7 @@ function ProjectsPage() {
     name: "",
     description: "",
     due_date: "",
+    color: "purple",
   });
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
@@ -56,6 +68,13 @@ function ProjectsPage() {
     }));
   };
 
+  const handleColorSelect = (color) => {
+    setFormData((prev) => ({
+      ...prev,
+      color,
+    }));
+  };
+
   const handleCreateProject = async (e) => {
     e.preventDefault();
     setLoading(true);
@@ -67,13 +86,14 @@ function ProjectsPage() {
       return;
     }
 
-    const { name, description, due_date } = formData;
+    const { name, description, due_date, color } = formData;
 
     const { error } = await supabase.from("projects").insert([
       {
         name,
         description,
         due_date: due_date || null,
+        color,
         owner_id: user.id,
       },
     ]);
@@ -88,6 +108,7 @@ function ProjectsPage() {
       name: "",
       description: "",
       due_date: "",
+      color: "purple",
     });
 
     setMessage("Project created successfully.");
@@ -137,6 +158,23 @@ function ProjectsPage() {
                   className="input"
                 />
 
+                <div className="color-picker-group">
+                  <p className="color-picker-label">Project Color</p>
+                  <div className="color-picker">
+                    {PROJECT_COLORS.map((color) => (
+                      <button
+                        key={color}
+                        type="button"
+                        className={`color-circle color-${color} ${
+                          formData.color === color ? "selected" : ""
+                        }`}
+                        onClick={() => handleColorSelect(color)}
+                        aria-label={`Choose ${color} color`}
+                      />
+                    ))}
+                  </div>
+                </div>
+
                 <button type="submit" disabled={loading} className="btn">
                   {loading ? "Creating..." : "Create Project"}
                 </button>
@@ -155,15 +193,25 @@ function ProjectsPage() {
                   {projects.map((project) => (
                     <div
                       key={project.id}
-                      className="project-item"
+                      className={`project-item project-item-${project.color || "purple"}`}
                       onClick={() => navigate(`/projects/${project.id}`)}
                     >
-                      <h3>{project.name}</h3>
-                      <p className="muted">{project.description || "No description"}</p>
+                      <div className="project-item-header">
+                        <span
+                          className={`project-color-dot color-${project.color || "purple"}`}
+                        ></span>
+                        <h3>{project.name}</h3>
+                      </div>
+
+                      <p className="muted">
+                        {project.description || "No description"}
+                      </p>
+
                       <p>
                         <strong>Due Date:</strong>{" "}
                         {project.due_date ? project.due_date : "No due date"}
                       </p>
+
                       <p>
                         <strong>Created:</strong>{" "}
                         {new Date(project.created_at).toLocaleString()}
