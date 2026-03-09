@@ -183,7 +183,7 @@ const styles = {
     backgroundColor: "#fff",
     padding: "24px",
     borderRadius: "12px",
-    boxShadow: "0 4px 10px rgba(0,0,0,0.1)",
+    boxShadow: "0 4px 10px rgba(228, 40, 40, 0.1)",
     textAlign: "center",
   },
 };
