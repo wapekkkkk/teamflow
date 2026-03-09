@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { supabase } from "../lib/supabaseClient";
+import AppLayout from "../components/AppLayout";
+
 
 function ProjectDetailsPage() {
   const navigate = useNavigate();
@@ -257,6 +259,7 @@ function ProjectDetailsPage() {
   );
 
   return (
+    <AppLayout>
     <div className="app-page">
       <div className="app-shell">
         <div className="top-bar">
@@ -422,6 +425,7 @@ function ProjectDetailsPage() {
         </div>
       </div>
     </div>
+    </AppLayout>
   );
 }
 

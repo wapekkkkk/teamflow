@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "../lib/supabaseClient";
+import AppLayout from "../components/AppLayout";
 
 function DashboardPage() {
   const navigate = useNavigate();
@@ -91,57 +92,45 @@ function DashboardPage() {
     setLoading(false);
   };
 
-  const handleLogout = async () => {
-    await supabase.auth.signOut();
-    navigate("/login");
-  };
-
   return (
-    <div className="app-page">
-      <div className="app-shell">
-        <div className="top-bar">
-          <div>
-            <h1 className="page-title">Dashboard</h1>
-            <p className="page-subtitle">Welcome, {userEmail}</p>
+    <AppLayout>
+      <div className="app-page">
+        <div className="app-shell">
+          <div className="top-bar">
+            <div>
+              <h1 className="page-title">Dashboard</h1>
+              <p className="page-subtitle">Welcome, {userEmail}</p>
+            </div>
           </div>
 
-          <div className="top-bar-actions">
-            <button onClick={() => navigate("/projects")} className="btn">
-              Go to Projects
-            </button>
-            <button onClick={handleLogout} className="btn btn-secondary">
-              Logout
-            </button>
-          </div>
+          {loading ? (
+            <p className="muted">Loading dashboard...</p>
+          ) : (
+            <div className="stats-grid">
+              <div className="card stat-card">
+                <h2 className="stat-number">{stats.totalProjects}</h2>
+                <p className="stat-label">Total Projects</p>
+              </div>
+
+              <div className="card stat-card">
+                <h2 className="stat-number">{stats.totalTasks}</h2>
+                <p className="stat-label">Total Tasks</p>
+              </div>
+
+              <div className="card stat-card">
+                <h2 className="stat-number">{stats.completedTasks}</h2>
+                <p className="stat-label">Completed Tasks</p>
+              </div>
+
+              <div className="card stat-card">
+                <h2 className="stat-number">{stats.overdueTasks}</h2>
+                <p className="stat-label">Overdue Tasks</p>
+              </div>
+            </div>
+          )}
         </div>
-
-        {loading ? (
-          <p className="muted">Loading dashboard...</p>
-        ) : (
-          <div className="stats-grid">
-            <div className="card stat-card">
-              <h2 className="stat-number">{stats.totalProjects}</h2>
-              <p className="stat-label">Total Projects</p>
-            </div>
-
-            <div className="card stat-card">
-              <h2 className="stat-number">{stats.totalTasks}</h2>
-              <p className="stat-label">Total Tasks</p>
-            </div>
-
-            <div className="card stat-card">
-              <h2 className="stat-number">{stats.completedTasks}</h2>
-              <p className="stat-label">Completed Tasks</p>
-            </div>
-
-            <div className="card stat-card">
-              <h2 className="stat-number">{stats.overdueTasks}</h2>
-              <p className="stat-label">Overdue Tasks</p>
-            </div>
-          </div>
-        )}
       </div>
-    </div>
+    </AppLayout>
   );
 }
 

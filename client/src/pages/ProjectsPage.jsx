@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "../lib/supabaseClient";
+import AppLayout from "../components/AppLayout";
 
 function ProjectsPage() {
   const navigate = useNavigate();
@@ -94,100 +95,88 @@ function ProjectsPage() {
     setLoading(false);
   };
 
-  const handleLogout = async () => {
-    await supabase.auth.signOut();
-    navigate("/login");
-  };
-
   return (
-    <div className="app-page">
-      <div className="app-shell">
-        <div className="top-bar">
-          <div>
-            <h1 className="page-title">Projects</h1>
-            <p className="page-subtitle">Manage and organize your work.</p>
+    <AppLayout>
+      <div className="app-page">
+        <div className="app-shell">
+          <div className="top-bar">
+            <div>
+              <h1 className="page-title">Projects</h1>
+              <p className="page-subtitle">Manage and organize your work.</p>
+            </div>
           </div>
 
-          <div className="top-bar-actions">
-            <button onClick={() => navigate("/dashboard")} className="btn">
-              Dashboard
-            </button>
-            <button onClick={handleLogout} className="btn btn-secondary">
-              Logout
-            </button>
-          </div>
-        </div>
+          <div className="two-col-grid">
+            <div className="card section-card">
+              <h2>Create Project</h2>
 
-        <div className="two-col-grid">
-          <div className="card section-card">
-            <h2>Create Project</h2>
+              <form onSubmit={handleCreateProject} className="form">
+                <input
+                  type="text"
+                  name="name"
+                  placeholder="Project Name"
+                  value={formData.name}
+                  onChange={handleChange}
+                  required
+                  className="input"
+                />
 
-            <form onSubmit={handleCreateProject} className="form">
-              <input
-                type="text"
-                name="name"
-                placeholder="Project Name"
-                value={formData.name}
-                onChange={handleChange}
-                required
-                className="input"
-              />
+                <textarea
+                  name="description"
+                  placeholder="Project Description"
+                  value={formData.description}
+                  onChange={handleChange}
+                  className="textarea"
+                />
 
-              <textarea
-                name="description"
-                placeholder="Project Description"
-                value={formData.description}
-                onChange={handleChange}
-                className="textarea"
-              />
+                <input
+                  type="date"
+                  name="due_date"
+                  value={formData.due_date}
+                  onChange={handleChange}
+                  className="input"
+                />
 
-              <input
-                type="date"
-                name="due_date"
-                value={formData.due_date}
-                onChange={handleChange}
-                className="input"
-              />
+                <button type="submit" disabled={loading} className="btn">
+                  {loading ? "Creating..." : "Create Project"}
+                </button>
+              </form>
 
-              <button type="submit" disabled={loading} className="btn">
-                {loading ? "Creating..." : "Create Project"}
-              </button>
-            </form>
+              {message && <p className="message">{message}</p>}
+            </div>
 
-            {message && <p className="message">{message}</p>}
-          </div>
+            <div className="card section-card">
+              <h2>Your Projects</h2>
 
-          <div className="card section-card">
-            <h2>Your Projects</h2>
-
-            {projects.length === 0 ? (
-              <p className="muted">No projects yet.</p>
-            ) : (
-              <div className="project-list">
-                {projects.map((project) => (
-                  <div
-                    key={project.id}
-                    className="project-item"
-                    onClick={() => navigate(`/projects/${project.id}`)}
-                  >
-                    <h3>{project.name}</h3>
-                    <p className="muted">{project.description || "No description"}</p>
-                    <p>
-                      <strong>Due Date:</strong>{" "}
-                      {project.due_date ? project.due_date : "No due date"}
-                    </p>
-                    <p>
-                      <strong>Created:</strong>{" "}
-                      {new Date(project.created_at).toLocaleString()}
-                    </p>
-                  </div>
-                ))}
-              </div>
-            )}
+              {projects.length === 0 ? (
+                <p className="muted">No projects yet.</p>
+              ) : (
+                <div className="project-list">
+                  {projects.map((project) => (
+                    <div
+                      key={project.id}
+                      className="project-item"
+                      onClick={() => navigate(`/projects/${project.id}`)}
+                    >
+                      <h3>{project.name}</h3>
+                      <p className="muted">{project.description || "No description"}</p>
+                      <p>
+                        <strong>Due Date:</strong>{" "}
+                        {project.due_date ? project.due_date : "No due date"}
+                      </p>
+                      <p>
+                        <strong>Created:</strong>{" "}
+                        {new Date(project.created_at).toLocaleString()}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
           </div>
         </div>
       </div>
-    </div>
+    </AppLayout>
   );
 }
 
