@@ -100,159 +100,95 @@ function ProjectsPage() {
   };
 
   return (
-    <div style={styles.page}>
-      <div style={styles.topBar}>
-        <h1>Projects</h1>
-        <div style={styles.topButtons}>
-          <button onClick={() => navigate("/dashboard")} style={styles.smallButton}>
-            Dashboard
-          </button>
-          <button onClick={handleLogout} style={styles.smallButton}>
-            Logout
-          </button>
-        </div>
-      </div>
+    <div className="app-page">
+      <div className="app-shell">
+        <div className="top-bar">
+          <div>
+            <h1 className="page-title">Projects</h1>
+            <p className="page-subtitle">Manage and organize your work.</p>
+          </div>
 
-      <div style={styles.container}>
-        <div style={styles.formCard}>
-          <h2>Create Project</h2>
-
-          <form onSubmit={handleCreateProject} style={styles.form}>
-            <input
-              type="text"
-              name="name"
-              placeholder="Project Name"
-              value={formData.name}
-              onChange={handleChange}
-              required
-              style={styles.input}
-            />
-
-            <textarea
-              name="description"
-              placeholder="Project Description"
-              value={formData.description}
-              onChange={handleChange}
-              style={styles.textarea}
-            />
-
-            <input
-              type="date"
-              name="due_date"
-              value={formData.due_date}
-              onChange={handleChange}
-              style={styles.input}
-            />
-
-            <button type="submit" disabled={loading} style={styles.button}>
-              {loading ? "Creating..." : "Create Project"}
+          <div className="top-bar-actions">
+            <button onClick={() => navigate("/dashboard")} className="btn">
+              Dashboard
             </button>
-          </form>
-
-          {message && <p>{message}</p>}
+            <button onClick={handleLogout} className="btn btn-secondary">
+              Logout
+            </button>
+          </div>
         </div>
 
-        <div style={styles.listCard}>
-          <h2>Your Projects</h2>
+        <div className="two-col-grid">
+          <div className="card section-card">
+            <h2>Create Project</h2>
 
-          {projects.length === 0 ? (
-            <p>No projects yet.</p>
-          ) : (
-            <div style={styles.projectList}>
-              {projects.map((project) => (
-                <div
-  key={project.id}
-  style={styles.projectItem}
-  onClick={() => navigate(`/projects/${project.id}`)}
->
-                  <h3>{project.name}</h3>
-                  <p>{project.description || "No description"}</p>
-                  <p>
-                    <strong>Due Date:</strong>{" "}
-                    {project.due_date ? project.due_date : "No due date"}
-                  </p>
-                  <p>
-                    <strong>Created:</strong>{" "}
-                    {new Date(project.created_at).toLocaleString()}
-                  </p>
-                </div>
-              ))}
-            </div>
-          )}
+            <form onSubmit={handleCreateProject} className="form">
+              <input
+                type="text"
+                name="name"
+                placeholder="Project Name"
+                value={formData.name}
+                onChange={handleChange}
+                required
+                className="input"
+              />
+
+              <textarea
+                name="description"
+                placeholder="Project Description"
+                value={formData.description}
+                onChange={handleChange}
+                className="textarea"
+              />
+
+              <input
+                type="date"
+                name="due_date"
+                value={formData.due_date}
+                onChange={handleChange}
+                className="input"
+              />
+
+              <button type="submit" disabled={loading} className="btn">
+                {loading ? "Creating..." : "Create Project"}
+              </button>
+            </form>
+
+            {message && <p className="message">{message}</p>}
+          </div>
+
+          <div className="card section-card">
+            <h2>Your Projects</h2>
+
+            {projects.length === 0 ? (
+              <p className="muted">No projects yet.</p>
+            ) : (
+              <div className="project-list">
+                {projects.map((project) => (
+                  <div
+                    key={project.id}
+                    className="project-item"
+                    onClick={() => navigate(`/projects/${project.id}`)}
+                  >
+                    <h3>{project.name}</h3>
+                    <p className="muted">{project.description || "No description"}</p>
+                    <p>
+                      <strong>Due Date:</strong>{" "}
+                      {project.due_date ? project.due_date : "No due date"}
+                    </p>
+                    <p>
+                      <strong>Created:</strong>{" "}
+                      {new Date(project.created_at).toLocaleString()}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
         </div>
       </div>
     </div>
   );
 }
-
-const styles = {
-  page: {
-    minHeight: "100vh",
-    backgroundColor: "#f4f4f4",
-    padding: "30px",
-  },
-  topBar: {
-    display: "flex",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: "30px",
-  },
-  topButtons: {
-    display: "flex",
-    gap: "10px",
-  },
-  smallButton: {
-    padding: "10px 16px",
-    cursor: "pointer",
-  },
-  container: {
-    display: "grid",
-    gridTemplateColumns: "1fr 1.5fr",
-    gap: "20px",
-  },
-  formCard: {
-    backgroundColor: "#fff",
-    padding: "24px",
-    borderRadius: "10px",
-    boxShadow: "0 4px 10px rgba(0,0,0,0.1)",
-  },
-  listCard: {
-    backgroundColor: "#fff",
-    padding: "24px",
-    borderRadius: "10px",
-    boxShadow: "0 4px 10px rgba(0,0,0,0.1)",
-  },
-  form: {
-    display: "flex",
-    flexDirection: "column",
-    gap: "14px",
-  },
-  input: {
-    padding: "12px",
-    fontSize: "14px",
-  },
-  textarea: {
-    padding: "12px",
-    fontSize: "14px",
-    minHeight: "100px",
-    resize: "vertical",
-  },
-  button: {
-    padding: "12px",
-    cursor: "pointer",
-  },
-  projectList: {
-    display: "flex",
-    flexDirection: "column",
-    gap: "16px",
-    marginTop: "16px",
-  },
-  projectItem: {
-    border: "1px solid #ddd",
-    borderRadius: "10px",
-    padding: "16px",
-    cursor: "pointer",
-  },
-};
 
 export default ProjectsPage;

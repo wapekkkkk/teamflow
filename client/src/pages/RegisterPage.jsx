@@ -51,7 +51,7 @@ function RegisterPage() {
         const { error: profileError } = await supabase.from("profiles").upsert({
           id: user.id,
           full_name: fullName,
-          email: email,
+          email,
         });
 
         if (profileError) {
@@ -61,7 +61,7 @@ function RegisterPage() {
         }
       }
 
-      setMessage("Registration successful. Please check your email if confirmation is required.");
+      setMessage("Registration successful. You can login now.");
       setFormData({
         fullName: "",
         email: "",
@@ -70,8 +70,8 @@ function RegisterPage() {
 
       setTimeout(() => {
         navigate("/login");
-      }, 1500);
-    } catch (err) {
+      }, 1200);
+    } catch {
       setMessage("Something went wrong.");
     }
 
@@ -79,11 +79,12 @@ function RegisterPage() {
   };
 
   return (
-    <div style={styles.container}>
-      <div style={styles.card}>
-        <h2>Register</h2>
+    <div className="auth-wrapper">
+      <div className="card auth-card">
+        <h1 className="auth-title">Create Account</h1>
+        <p className="auth-subtitle">Start managing projects with TeamFlow.</p>
 
-        <form onSubmit={handleRegister} style={styles.form}>
+        <form onSubmit={handleRegister} className="form">
           <input
             type="text"
             name="fullName"
@@ -91,7 +92,7 @@ function RegisterPage() {
             value={formData.fullName}
             onChange={handleChange}
             required
-            style={styles.input}
+            className="input"
           />
 
           <input
@@ -101,7 +102,7 @@ function RegisterPage() {
             value={formData.email}
             onChange={handleChange}
             required
-            style={styles.input}
+            className="input"
           />
 
           <input
@@ -111,53 +112,22 @@ function RegisterPage() {
             value={formData.password}
             onChange={handleChange}
             required
-            style={styles.input}
+            className="input"
           />
 
-          <button type="submit" disabled={loading} style={styles.button}>
+          <button type="submit" disabled={loading} className="btn">
             {loading ? "Registering..." : "Register"}
           </button>
         </form>
 
-        {message && <p>{message}</p>}
+        {message && <p className="message">{message}</p>}
 
-        <p>
+        <p className="muted" style={{ marginTop: "18px" }}>
           Already have an account? <Link to="/login">Login</Link>
         </p>
       </div>
     </div>
   );
 }
-
-const styles = {
-  container: {
-    minHeight: "100vh",
-    display: "flex",
-    justifyContent: "center",
-    alignItems: "center",
-    backgroundColor: "#f4f4f4",
-  },
-  card: {
-    width: "350px",
-    padding: "30px",
-    backgroundColor: "#fff",
-    borderRadius: "10px",
-    boxShadow: "0 4px 10px rgba(0,0,0,0.1)",
-  },
-  form: {
-    display: "flex",
-    flexDirection: "column",
-    gap: "15px",
-  },
-  input: {
-    padding: "12px",
-    fontSize: "14px",
-  },
-  button: {
-    padding: "12px",
-    fontSize: "14px",
-    cursor: "pointer",
-  },
-};
 
 export default RegisterPage;

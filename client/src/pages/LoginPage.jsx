@@ -40,7 +40,7 @@ function LoginPage() {
       }
 
       navigate("/dashboard");
-    } catch (err) {
+    } catch {
       setMessage("Something went wrong.");
     }
 
@@ -48,11 +48,12 @@ function LoginPage() {
   };
 
   return (
-    <div style={styles.container}>
-      <div style={styles.card}>
-        <h2>Login</h2>
+    <div className="auth-wrapper">
+      <div className="card auth-card">
+        <h1 className="auth-title">Welcome Back</h1>
+        <p className="auth-subtitle">Login to continue using TeamFlow.</p>
 
-        <form onSubmit={handleLogin} style={styles.form}>
+        <form onSubmit={handleLogin} className="form">
           <input
             type="email"
             name="email"
@@ -60,7 +61,7 @@ function LoginPage() {
             value={formData.email}
             onChange={handleChange}
             required
-            style={styles.input}
+            className="input"
           />
 
           <input
@@ -70,53 +71,22 @@ function LoginPage() {
             value={formData.password}
             onChange={handleChange}
             required
-            style={styles.input}
+            className="input"
           />
 
-          <button type="submit" disabled={loading} style={styles.button}>
+          <button type="submit" disabled={loading} className="btn">
             {loading ? "Logging in..." : "Login"}
           </button>
         </form>
 
-        {message && <p>{message}</p>}
+        {message && <p className="message">{message}</p>}
 
-        <p>
+        <p className="muted" style={{ marginTop: "18px" }}>
           Do not have an account? <Link to="/register">Register</Link>
         </p>
       </div>
     </div>
   );
 }
-
-const styles = {
-  container: {
-    minHeight: "100vh",
-    display: "flex",
-    justifyContent: "center",
-    alignItems: "center",
-    backgroundColor: "#f4f4f4",
-  },
-  card: {
-    width: "350px",
-    padding: "30px",
-    backgroundColor: "#fff",
-    borderRadius: "10px",
-    boxShadow: "0 4px 10px rgba(0,0,0,0.1)",
-  },
-  form: {
-    display: "flex",
-    flexDirection: "column",
-    gap: "15px",
-  },
-  input: {
-    padding: "12px",
-    fontSize: "14px",
-  },
-  button: {
-    padding: "12px",
-    fontSize: "14px",
-    cursor: "pointer",
-  },
-};
 
 export default LoginPage;

@@ -38,7 +38,6 @@ function DashboardPage() {
       .eq("owner_id", user.id);
 
     if (projectsError) {
-      console.error("Projects fetch error:", projectsError.message);
       setLoading(false);
       return;
     }
@@ -64,13 +63,13 @@ function DashboardPage() {
       .in("project_id", projectIds);
 
     if (tasksError) {
-      console.error("Tasks fetch error:", tasksError.message);
       setLoading(false);
       return;
     }
 
     const totalTasks = tasks?.length || 0;
-    const completedTasks = tasks?.filter((task) => task.status === "Done").length || 0;
+    const completedTasks =
+      tasks?.filter((task) => task.status === "Done").length || 0;
 
     const today = new Date();
     today.setHours(0, 0, 0, 0);
@@ -98,94 +97,52 @@ function DashboardPage() {
   };
 
   return (
-    <div style={styles.page}>
-      <div style={styles.topBar}>
-        <div>
-          <h1 style={styles.title}>Dashboard</h1>
-          <p style={styles.subtitle}>Welcome, {userEmail}</p>
+    <div className="app-page">
+      <div className="app-shell">
+        <div className="top-bar">
+          <div>
+            <h1 className="page-title">Dashboard</h1>
+            <p className="page-subtitle">Welcome, {userEmail}</p>
+          </div>
+
+          <div className="top-bar-actions">
+            <button onClick={() => navigate("/projects")} className="btn">
+              Go to Projects
+            </button>
+            <button onClick={handleLogout} className="btn btn-secondary">
+              Logout
+            </button>
+          </div>
         </div>
 
-        <div style={styles.topButtons}>
-          <button onClick={() => navigate("/projects")} style={styles.button}>
-            Go to Projects
-          </button>
-          <button onClick={handleLogout} style={styles.button}>
-            Logout
-          </button>
-        </div>
+        {loading ? (
+          <p className="muted">Loading dashboard...</p>
+        ) : (
+          <div className="stats-grid">
+            <div className="card stat-card">
+              <h2 className="stat-number">{stats.totalProjects}</h2>
+              <p className="stat-label">Total Projects</p>
+            </div>
+
+            <div className="card stat-card">
+              <h2 className="stat-number">{stats.totalTasks}</h2>
+              <p className="stat-label">Total Tasks</p>
+            </div>
+
+            <div className="card stat-card">
+              <h2 className="stat-number">{stats.completedTasks}</h2>
+              <p className="stat-label">Completed Tasks</p>
+            </div>
+
+            <div className="card stat-card">
+              <h2 className="stat-number">{stats.overdueTasks}</h2>
+              <p className="stat-label">Overdue Tasks</p>
+            </div>
+          </div>
+        )}
       </div>
-
-      {loading ? (
-        <p>Loading dashboard...</p>
-      ) : (
-        <div style={styles.statsGrid}>
-          <div style={styles.card}>
-            <h2>{stats.totalProjects}</h2>
-            <p>Total Projects</p>
-          </div>
-
-          <div style={styles.card}>
-            <h2>{stats.totalTasks}</h2>
-            <p>Total Tasks</p>
-          </div>
-
-          <div style={styles.card}>
-            <h2>{stats.completedTasks}</h2>
-            <p>Completed Tasks</p>
-          </div>
-
-          <div style={styles.card}>
-            <h2>{stats.overdueTasks}</h2>
-            <p>Overdue Tasks</p>
-          </div>
-        </div>
-      )}
     </div>
   );
 }
-
-const styles = {
-  page: {
-    minHeight: "100vh",
-    backgroundColor: "#f4f4f4",
-    padding: "30px",
-  },
-  topBar: {
-    display: "flex",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: "30px",
-    gap: "20px",
-    flexWrap: "wrap",
-  },
-  title: {
-    margin: 0,
-  },
-  subtitle: {
-    marginTop: "8px",
-    color: "#555",
-  },
-  topButtons: {
-    display: "flex",
-    gap: "12px",
-    flexWrap: "wrap",
-  },
-  button: {
-    padding: "12px 18px",
-    cursor: "pointer",
-  },
-  statsGrid: {
-    display: "grid",
-    gridTemplateColumns: "repeat(4, 1fr)",
-    gap: "20px",
-  },
-  card: {
-    backgroundColor: "#fff",
-    padding: "24px",
-    borderRadius: "12px",
-    boxShadow: "0 4px 10px rgba(228, 40, 40, 0.1)",
-    textAlign: "center",
-  },
-};
 
 export default DashboardPage;
