@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "../lib/supabaseClient";
 import AppLayout from "../components/AppLayout";
@@ -9,6 +9,8 @@ function DashboardPage() {
   const [userEmail, setUserEmail] = useState("");
   const [projects, setProjects] = useState([]);
   const [tasks, setTasks] = useState([]);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [updatingTaskId, setUpdatingTaskId] = useState(null);
   const [stats, setStats] = useState({
     totalProjects: 0,
     totalTasks: 0,
@@ -112,6 +114,51 @@ function DashboardPage() {
     return Math.round((doneCount / projectTasks.length) * 100);
   };
 
+  const filteredProjects = useMemo(() => {
+    const keyword = searchTerm.trim().toLowerCase();
+
+    if (!keyword) return projects;
+
+    return projects.filter((project) => {
+      const nameMatch = project.name?.toLowerCase().includes(keyword);
+      const descMatch = project.description?.toLowerCase().includes(keyword);
+      return nameMatch || descMatch;
+    });
+  }, [projects, searchTerm]);
+
+  const filteredTasks = useMemo(() => {
+    const keyword = searchTerm.trim().toLowerCase();
+
+    let baseTasks = tasks;
+
+    if (keyword) {
+      baseTasks = tasks.filter((task) => {
+        const project = getProjectById(task.project_id);
+        const titleMatch = task.title?.toLowerCase().includes(keyword);
+        const projectMatch = project?.name?.toLowerCase().includes(keyword);
+        const descMatch = task.description?.toLowerCase().includes(keyword);
+        return titleMatch || projectMatch || descMatch;
+      });
+    }
+
+    return baseTasks.slice(0, 5);
+  }, [tasks, projects, searchTerm]);
+
+  const handleMarkAsDone = async (taskId) => {
+    setUpdatingTaskId(taskId);
+
+    const { error } = await supabase
+      .from("tasks")
+      .update({ status: "Done" })
+      .eq("id", taskId);
+
+    if (!error) {
+      await loadDashboardData();
+    }
+
+    setUpdatingTaskId(null);
+  };
+
   return (
     <AppLayout>
       <div className="app-page">
@@ -121,6 +168,16 @@ function DashboardPage() {
               <h1 className="page-title">Dashboard</h1>
               <p className="page-subtitle">Welcome, {userEmail}</p>
             </div>
+          </div>
+
+          <div className="dashboard-search-wrap">
+            <input
+              type="text"
+              placeholder="Search projects or tasks..."
+              className="input dashboard-search"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
           </div>
 
           {loading ? (
@@ -150,15 +207,21 @@ function DashboardPage() {
               </div>
 
               <div className="dashboard-section">
-                <div className="section-header">
+                <div className="section-header section-header-row">
                   <h2>Projects</h2>
+                  <button
+                    className="link-button"
+                    onClick={() => navigate("/projects")}
+                  >
+                    View All
+                  </button>
                 </div>
 
-                {projects.length === 0 ? (
-                  <p className="muted">No projects yet.</p>
+                {filteredProjects.length === 0 ? (
+                  <p className="muted">No matching projects found.</p>
                 ) : (
-                  <div className="dashboard-project-grid">
-                    {projects.map((project) => {
+                  <div className="dashboard-project-scroll">
+                    {filteredProjects.map((project) => {
                       const progress = getProjectProgress(project.id);
                       const projectTaskCount = tasks.filter(
                         (task) => task.project_id === project.id
@@ -202,15 +265,15 @@ function DashboardPage() {
               </div>
 
               <div className="dashboard-section">
-                <div className="section-header">
-                  <h2>Tasks</h2>
+                <div className="section-header section-header-row">
+                  <h2>Recent Tasks</h2>
                 </div>
 
-                {tasks.length === 0 ? (
-                  <p className="muted">No tasks yet.</p>
+                {filteredTasks.length === 0 ? (
+                  <p className="muted">No matching tasks found.</p>
                 ) : (
                   <div className="dashboard-task-list">
-                    {tasks.map((task) => {
+                    {filteredTasks.map((task) => {
                       const project = getProjectById(task.project_id);
                       const projectColor = project?.color || "purple";
 
@@ -222,10 +285,26 @@ function DashboardPage() {
                           <div className="task-color-bar"></div>
 
                           <div className="dashboard-task-content">
-                            <h3>{task.title}</h3>
-                            <p className="dashboard-task-project">
-                              {project?.name || "Unknown Project"}
-                            </p>
+                            <div className="dashboard-task-top">
+                              <div>
+                                <h3>{task.title}</h3>
+                                <p className="dashboard-task-project">
+                                  {project?.name || "Unknown Project"}
+                                </p>
+                              </div>
+
+                              {task.status !== "Done" && (
+                                <button
+                                  className="btn btn-success task-done-btn"
+                                  onClick={() => handleMarkAsDone(task.id)}
+                                  disabled={updatingTaskId === task.id}
+                                >
+                                  {updatingTaskId === task.id
+                                    ? "Updating..."
+                                    : "Mark as Done"}
+                                </button>
+                              )}
+                            </div>
 
                             <div className="dashboard-task-meta">
                               <span className="task-status-badge">{task.status}</span>

@@ -3,7 +3,6 @@ import { useNavigate, useParams } from "react-router-dom";
 import { supabase } from "../lib/supabaseClient";
 import AppLayout from "../components/AppLayout";
 
-
 function ProjectDetailsPage() {
   const navigate = useNavigate();
   const { projectId } = useParams();
@@ -217,214 +216,249 @@ function ProjectDetailsPage() {
     );
   };
 
+  const getPriorityClass = (priority) => {
+    if (priority === "High") return "priority-high";
+    if (priority === "Low") return "priority-low";
+    return "priority-medium";
+  };
+
+  const getProjectColor = () => {
+    return project?.color || "purple";
+  };
+
   const todoTasks = tasks.filter((task) => task.status === "To Do");
   const inProgressTasks = tasks.filter((task) => task.status === "In Progress");
   const doneTasks = tasks.filter((task) => task.status === "Done");
 
   const renderTaskCard = (task) => (
-    <div key={task.id} className="task-card">
-      <h3 style={{ marginTop: 0 }}>{task.title}</h3>
-      <p className="muted">{task.description || "No description"}</p>
-      <p>
-        <strong>Priority:</strong> {task.priority}
-      </p>
-      <p>
-        <strong>Due Date:</strong> {task.due_date || "No due date"}
-      </p>
-      <p>
-        <strong>Assigned To:</strong> {getAssignedMemberLabel(task.assigned_to)}
-      </p>
+    <div
+      key={task.id}
+      className={`project-task-card task-theme-${getProjectColor()}`}
+    >
+      <div className="task-color-bar"></div>
 
-      <div className="status-buttons">
-        <button
-          onClick={() => updateTaskStatus(task.id, "To Do")}
-          className="status-btn status-todo"
-        >
-          To Do
-        </button>
-        <button
-          onClick={() => updateTaskStatus(task.id, "In Progress")}
-          className="status-btn status-progress"
-        >
-          In Progress
-        </button>
-        <button
-          onClick={() => updateTaskStatus(task.id, "Done")}
-          className="status-btn status-done"
-        >
-          Done
-        </button>
+      <div className="project-task-content">
+        <div className="project-task-header">
+          <h3>{task.title}</h3>
+        </div>
+
+        <p className="project-task-description muted">
+          {task.description || "No description"}
+        </p>
+
+        <div className="project-task-badges">
+          <span className="task-status-badge">{task.status}</span>
+          <span className={`task-priority-badge ${getPriorityClass(task.priority)}`}>
+            {task.priority} Priority
+          </span>
+          <span className="task-date-badge">
+            Due: {task.due_date || "No due date"}
+          </span>
+          <span className="task-member-badge">
+            {getAssignedMemberLabel(task.assigned_to)}
+          </span>
+        </div>
+
+        <div className="project-task-actions">
+          <button
+            onClick={() => updateTaskStatus(task.id, "To Do")}
+            className={`project-status-btn ${
+              task.status === "To Do" ? "active" : ""
+            }`}
+          >
+            To Do
+          </button>
+          <button
+            onClick={() => updateTaskStatus(task.id, "In Progress")}
+            className={`project-status-btn ${
+              task.status === "In Progress" ? "active" : ""
+            }`}
+          >
+            In Progress
+          </button>
+          <button
+            onClick={() => updateTaskStatus(task.id, "Done")}
+            className={`project-status-btn ${
+              task.status === "Done" ? "active" : ""
+            }`}
+          >
+            Done
+          </button>
+        </div>
       </div>
     </div>
   );
 
   return (
     <AppLayout>
-    <div className="app-page">
-      <div className="app-shell">
-        <div className="top-bar">
-          <div>
-            <h1 className="page-title">Project Details</h1>
-            <p className="page-subtitle">Manage tasks and members in one place.</p>
-          </div>
+      <div className="app-page">
+        <div className="app-shell">
+          <div className="top-bar">
+            <div>
+              <h1 className="page-title">Project Details</h1>
+              <p className="page-subtitle">Manage tasks and members in one place.</p>
+            </div>
 
-          <div className="top-bar-actions">
-            <button onClick={() => navigate("/projects")} className="btn">
-              Back to Projects
-            </button>
-            <button onClick={handleLogout} className="btn btn-secondary">
-              Logout
-            </button>
-          </div>
-        </div>
-
-        {project && (
-          <div className="card section-card" style={{ marginBottom: "20px" }}>
-            <h2>{project.name}</h2>
-            <p className="muted">{project.description || "No description"}</p>
-            <p>
-              <strong>Due Date:</strong> {project.due_date || "No due date"}
-            </p>
-            <p>
-              <strong>Created:</strong> {new Date(project.created_at).toLocaleString()}
-            </p>
-          </div>
-        )}
-
-        <div className="project-top-grid">
-          <div className="card section-card">
-            <h2>Create Task</h2>
-
-            <form onSubmit={handleCreateTask} className="form">
-              <input
-                type="text"
-                name="title"
-                placeholder="Task Title"
-                value={taskForm.title}
-                onChange={handleChange}
-                required
-                className="input"
-              />
-
-              <textarea
-                name="description"
-                placeholder="Task Description"
-                value={taskForm.description}
-                onChange={handleChange}
-                className="textarea"
-              />
-
-              <input
-                type="date"
-                name="due_date"
-                value={taskForm.due_date}
-                onChange={handleChange}
-                className="input"
-              />
-
-              <select
-                name="priority"
-                value={taskForm.priority}
-                onChange={handleChange}
-                className="select"
-              >
-                <option value="Low">Low</option>
-                <option value="Medium">Medium</option>
-                <option value="High">High</option>
-              </select>
-
-              <select
-                name="assigned_to"
-                value={taskForm.assigned_to}
-                onChange={handleChange}
-                className="select"
-              >
-                <option value="">Unassigned</option>
-                {members.map((member) => (
-                  <option key={member.user_id} value={member.user_id}>
-                    {member.profiles?.full_name || member.profiles?.email}
-                  </option>
-                ))}
-              </select>
-
-              <button type="submit" disabled={loading} className="btn">
-                {loading ? "Creating..." : "Create Task"}
+            <div className="top-bar-actions">
+              <button onClick={() => navigate("/projects")} className="btn">
+                Back to Projects
               </button>
-            </form>
+              <button onClick={handleLogout} className="btn btn-secondary">
+                Logout
+              </button>
+            </div>
           </div>
 
-          <div className="card section-card">
-            <h2>Project Members</h2>
+          {project && (
+            <div
+              className={`card section-card project-details-hero project-theme-${project.color || "purple"}`}
+              style={{ marginBottom: "20px" }}
+            >
+              <h2>{project.name}</h2>
+              <p className="muted">{project.description || "No description"}</p>
+              <p>
+                <strong>Due Date:</strong> {project.due_date || "No due date"}
+              </p>
+              <p>
+                <strong>Created:</strong> {new Date(project.created_at).toLocaleString()}
+              </p>
+            </div>
+          )}
 
-            <form onSubmit={handleAddMember} className="form">
-              <input
-                type="email"
-                placeholder="Enter member email"
-                value={memberEmail}
-                onChange={(e) => setMemberEmail(e.target.value)}
-                className="input"
-                required
-              />
-              <button type="submit" className="btn">
-                Add Member
-              </button>
-            </form>
+          <div className="project-top-grid">
+            <div className="card section-card">
+              <h2>Create Task</h2>
 
-            <div className="member-list">
-              {members.length === 0 ? (
-                <p className="muted">No members yet.</p>
+              <form onSubmit={handleCreateTask} className="form">
+                <input
+                  type="text"
+                  name="title"
+                  placeholder="Task Title"
+                  value={taskForm.title}
+                  onChange={handleChange}
+                  required
+                  className="input"
+                />
+
+                <textarea
+                  name="description"
+                  placeholder="Task Description"
+                  value={taskForm.description}
+                  onChange={handleChange}
+                  className="textarea"
+                />
+
+                <input
+                  type="date"
+                  name="due_date"
+                  value={taskForm.due_date}
+                  onChange={handleChange}
+                  className="input"
+                />
+
+                <select
+                  name="priority"
+                  value={taskForm.priority}
+                  onChange={handleChange}
+                  className="select"
+                >
+                  <option value="Low">Low</option>
+                  <option value="Medium">Medium</option>
+                  <option value="High">High</option>
+                </select>
+
+                <select
+                  name="assigned_to"
+                  value={taskForm.assigned_to}
+                  onChange={handleChange}
+                  className="select"
+                >
+                  <option value="">Unassigned</option>
+                  {members.map((member) => (
+                    <option key={member.user_id} value={member.user_id}>
+                      {member.profiles?.full_name || member.profiles?.email}
+                    </option>
+                  ))}
+                </select>
+
+                <button type="submit" disabled={loading} className="btn">
+                  {loading ? "Creating..." : "Create Task"}
+                </button>
+              </form>
+            </div>
+
+            <div className="card section-card">
+              <h2>Project Members</h2>
+
+              <form onSubmit={handleAddMember} className="form">
+                <input
+                  type="email"
+                  placeholder="Enter member email"
+                  value={memberEmail}
+                  onChange={(e) => setMemberEmail(e.target.value)}
+                  className="input"
+                  required
+                />
+                <button type="submit" className="btn">
+                  Add Member
+                </button>
+              </form>
+
+              <div className="member-list">
+                {members.length === 0 ? (
+                  <p className="muted">No members yet.</p>
+                ) : (
+                  members.map((member) => (
+                    <div key={member.id} className="member-item">
+                      <p>
+                        <strong>Name:</strong>{" "}
+                        {member.profiles?.full_name || "No name"}
+                      </p>
+                      <p>
+                        <strong>Email:</strong> {member.profiles?.email}
+                      </p>
+                      <p>
+                        <strong>Role:</strong> {member.role}
+                      </p>
+                    </div>
+                  ))
+                )}
+              </div>
+            </div>
+          </div>
+
+          {message && <p className="message">{message}</p>}
+
+          <div className="board">
+            <div className="card board-column">
+              <h2 className="board-title">To Do</h2>
+              {todoTasks.length === 0 ? (
+                <p className="muted">No tasks</p>
               ) : (
-                members.map((member) => (
-                  <div key={member.id} className="member-item">
-                    <p>
-                      <strong>Name:</strong>{" "}
-                      {member.profiles?.full_name || "No name"}
-                    </p>
-                    <p>
-                      <strong>Email:</strong> {member.profiles?.email}
-                    </p>
-                    <p>
-                      <strong>Role:</strong> {member.role}
-                    </p>
-                  </div>
-                ))
+                todoTasks.map(renderTaskCard)
+              )}
+            </div>
+
+            <div className="card board-column">
+              <h2 className="board-title">In Progress</h2>
+              {inProgressTasks.length === 0 ? (
+                <p className="muted">No tasks</p>
+              ) : (
+                inProgressTasks.map(renderTaskCard)
+              )}
+            </div>
+
+            <div className="card board-column">
+              <h2 className="board-title">Done</h2>
+              {doneTasks.length === 0 ? (
+                <p className="muted">No tasks</p>
+              ) : (
+                doneTasks.map(renderTaskCard)
               )}
             </div>
           </div>
         </div>
-
-        {message && <p className="message">{message}</p>}
-
-        <div className="board">
-          <div className="card board-column">
-            <h2 className="board-title">To Do</h2>
-            {todoTasks.length === 0 ? (
-              <p className="muted">No tasks</p>
-            ) : (
-              todoTasks.map(renderTaskCard)
-            )}
-          </div>
-
-          <div className="card board-column">
-            <h2 className="board-title">In Progress</h2>
-            {inProgressTasks.length === 0 ? (
-              <p className="muted">No tasks</p>
-            ) : (
-              inProgressTasks.map(renderTaskCard)
-            )}
-          </div>
-
-          <div className="card board-column">
-            <h2 className="board-title">Done</h2>
-            {doneTasks.length === 0 ? (
-              <p className="muted">No tasks</p>
-            ) : (
-              doneTasks.map(renderTaskCard)
-            )}
-          </div>
-        </div>
       </div>
-    </div>
     </AppLayout>
   );
 }
