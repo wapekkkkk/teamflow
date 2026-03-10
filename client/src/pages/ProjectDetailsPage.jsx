@@ -2,6 +2,111 @@ import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { supabase } from "../lib/supabaseClient";
 import AppLayout from "../components/AppLayout";
+import { DndContext, closestCorners } from "@dnd-kit/core";
+import { SortableContext, useSortable, verticalListSortingStrategy } from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
+import { useDroppable } from "@dnd-kit/core";
+
+
+const COLUMN_CONFIG = [
+  { id: "To Do", title: "To Do" },
+  { id: "In Progress", title: "In Progress" },
+  { id: "Done", title: "Done" },
+];
+
+function SortableTaskCard({ task, projectColor, getAssignedMemberLabel, onOpenTask }) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } =
+    useSortable({
+      id: task.id,
+      data: {
+        type: "task",
+        task,
+      },
+    });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.65 : 1,
+  };
+
+  const getPriorityClass = (priority) => {
+    if (priority === "High") return "priority-high";
+    if (priority === "Low") return "priority-low";
+    return "priority-medium";
+  };
+
+  return (
+    <div
+      ref={setNodeRef}
+      style={style}
+      className={`project-task-card task-theme-${projectColor} ${isDragging ? "dragging-task" : ""}`}
+    >
+      <div className="task-color-bar"></div>
+
+      <div className="project-task-content">
+        <div className="project-task-header">
+          <div
+            className="project-task-main"
+            onClick={() => onOpenTask(task.id)}
+            role="button"
+            tabIndex={0}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" || e.key === " ") {
+                onOpenTask(task.id);
+              }
+            }}
+          >
+            <h3>{task.title}</h3>
+            <p className="project-task-description muted">
+              {task.description || "No description"}
+            </p>
+          </div>
+
+          <button
+            type="button"
+            className="drag-handle-btn"
+            {...attributes}
+            {...listeners}
+            aria-label={`Drag task ${task.title}`}
+            title="Drag task"
+          >
+            ⋮⋮
+          </button>
+        </div>
+
+        <div className="project-task-badges">
+          <span className="task-status-badge">{task.status}</span>
+          <span className={`task-priority-badge ${getPriorityClass(task.priority)}`}>
+            {task.priority} Priority
+          </span>
+          <span className="task-date-badge">
+            Due: {task.due_date || "No due date"}
+          </span>
+          <span className="task-member-badge">
+            {getAssignedMemberLabel(task.assigned_to)}
+          </span>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function DroppableColumn({ title, columnId, tasks, children }) {
+  const { setNodeRef, isOver } = useDroppable({
+    id: columnId,
+  });
+
+  return (
+    <div
+      ref={setNodeRef}
+      className={`card board-column ${isOver ? "board-column-active" : ""}`}
+    >
+      <h2 className="board-title">{title}</h2>
+      {tasks.length === 0 ? <p className="muted">No tasks</p> : children}
+    </div>
+  );
+}
 
 function ProjectDetailsPage() {
   const navigate = useNavigate();
@@ -184,12 +289,21 @@ function ProjectDetailsPage() {
   };
 
   const updateTaskStatus = async (taskId, newStatus) => {
+    const previousTasks = [...tasks];
+
+    setTasks((prev) =>
+      prev.map((task) =>
+        task.id === taskId ? { ...task, status: newStatus } : task
+      )
+    );
+
     const { error } = await supabase
       .from("tasks")
       .update({ status: newStatus })
       .eq("id", taskId);
 
     if (error) {
+      setTasks(previousTasks);
       setMessage(error.message);
       return;
     }
@@ -197,9 +311,35 @@ function ProjectDetailsPage() {
     await fetchTasks();
   };
 
+  const handleDragEnd = async (event) => {
+    const { active, over } = event;
+
+    if (!over) return;
+
+    const activeTaskId = active.id;
+
+    let destinationStatus = over.id;
+
+    const overTask = tasks.find((task) => task.id === over.id);
+    if (overTask) {
+      destinationStatus = overTask.status;
+    }
+
+    const draggedTask = tasks.find((task) => task.id === activeTaskId);
+    if (!draggedTask || !destinationStatus || draggedTask.status === destinationStatus) {
+      return;
+    }
+
+    await updateTaskStatus(activeTaskId, destinationStatus);
+  };
+
   const handleLogout = async () => {
     await supabase.auth.signOut();
     navigate("/login");
+  };
+
+  const handleOpenTask = (taskId) => {
+    navigate(`/tasks/${taskId}`);
   };
 
   const getAssignedMemberLabel = (assignedToId) => {
@@ -216,12 +356,6 @@ function ProjectDetailsPage() {
     );
   };
 
-  const getPriorityClass = (priority) => {
-    if (priority === "High") return "priority-high";
-    if (priority === "Low") return "priority-low";
-    return "priority-medium";
-  };
-
   const getProjectColor = () => {
     return project?.color || "purple";
   };
@@ -229,65 +363,6 @@ function ProjectDetailsPage() {
   const todoTasks = tasks.filter((task) => task.status === "To Do");
   const inProgressTasks = tasks.filter((task) => task.status === "In Progress");
   const doneTasks = tasks.filter((task) => task.status === "Done");
-
-  const renderTaskCard = (task) => (
-    <div
-      key={task.id}
-      className={`project-task-card task-theme-${getProjectColor()}`}
-    >
-      <div className="task-color-bar"></div>
-
-      <div className="project-task-content">
-        <div className="project-task-header">
-          <h3>{task.title}</h3>
-        </div>
-
-        <p className="project-task-description muted">
-          {task.description || "No description"}
-        </p>
-
-        <div className="project-task-badges">
-          <span className="task-status-badge">{task.status}</span>
-          <span className={`task-priority-badge ${getPriorityClass(task.priority)}`}>
-            {task.priority} Priority
-          </span>
-          <span className="task-date-badge">
-            Due: {task.due_date || "No due date"}
-          </span>
-          <span className="task-member-badge">
-            {getAssignedMemberLabel(task.assigned_to)}
-          </span>
-        </div>
-
-        <div className="project-task-actions">
-          <button
-            onClick={() => updateTaskStatus(task.id, "To Do")}
-            className={`project-status-btn ${
-              task.status === "To Do" ? "active" : ""
-            }`}
-          >
-            To Do
-          </button>
-          <button
-            onClick={() => updateTaskStatus(task.id, "In Progress")}
-            className={`project-status-btn ${
-              task.status === "In Progress" ? "active" : ""
-            }`}
-          >
-            In Progress
-          </button>
-          <button
-            onClick={() => updateTaskStatus(task.id, "Done")}
-            className={`project-status-btn ${
-              task.status === "Done" ? "active" : ""
-            }`}
-          >
-            Done
-          </button>
-        </div>
-      </div>
-    </div>
-  );
 
   return (
     <AppLayout>
@@ -429,34 +504,64 @@ function ProjectDetailsPage() {
 
           {message && <p className="message">{message}</p>}
 
-          <div className="board">
-            <div className="card board-column">
-              <h2 className="board-title">To Do</h2>
-              {todoTasks.length === 0 ? (
-                <p className="muted">No tasks</p>
-              ) : (
-                todoTasks.map(renderTaskCard)
-              )}
-            </div>
+          <DndContext collisionDetection={closestCorners} onDragEnd={handleDragEnd}>
+            <div className="board">
+              <DroppableColumn title="To Do" columnId="To Do" tasks={todoTasks}>
+                <SortableContext
+                  items={todoTasks.map((task) => task.id)}
+                  strategy={verticalListSortingStrategy}
+                >
+                  {todoTasks.map((task) => (
+                    <SortableTaskCard
+                      key={task.id}
+                      task={task}
+                      projectColor={getProjectColor()}
+                      getAssignedMemberLabel={getAssignedMemberLabel}
+                      onOpenTask={handleOpenTask}
+                    />
+                  ))}
+                </SortableContext>
+              </DroppableColumn>
 
-            <div className="card board-column">
-              <h2 className="board-title">In Progress</h2>
-              {inProgressTasks.length === 0 ? (
-                <p className="muted">No tasks</p>
-              ) : (
-                inProgressTasks.map(renderTaskCard)
-              )}
-            </div>
+              <DroppableColumn
+                title="In Progress"
+                columnId="In Progress"
+                tasks={inProgressTasks}
+              >
+                <SortableContext
+                  items={inProgressTasks.map((task) => task.id)}
+                  strategy={verticalListSortingStrategy}
+                >
+                  {inProgressTasks.map((task) => (
+                    <SortableTaskCard
+                      key={task.id}
+                      task={task}
+                      projectColor={getProjectColor()}
+                      getAssignedMemberLabel={getAssignedMemberLabel}
+                      onOpenTask={handleOpenTask}
+                    />
+                  ))}
+                </SortableContext>
+              </DroppableColumn>
 
-            <div className="card board-column">
-              <h2 className="board-title">Done</h2>
-              {doneTasks.length === 0 ? (
-                <p className="muted">No tasks</p>
-              ) : (
-                doneTasks.map(renderTaskCard)
-              )}
+              <DroppableColumn title="Done" columnId="Done" tasks={doneTasks}>
+                <SortableContext
+                  items={doneTasks.map((task) => task.id)}
+                  strategy={verticalListSortingStrategy}
+                >
+                  {doneTasks.map((task) => (
+                    <SortableTaskCard
+                      key={task.id}
+                      task={task}
+                      projectColor={getProjectColor()}
+                      getAssignedMemberLabel={getAssignedMemberLabel}
+                      onOpenTask={handleOpenTask}
+                    />
+                  ))}
+                </SortableContext>
+              </DroppableColumn>
             </div>
-          </div>
+          </DndContext>
         </div>
       </div>
     </AppLayout>
