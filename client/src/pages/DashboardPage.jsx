@@ -144,12 +144,12 @@ function DashboardPage() {
     return baseTasks.slice(0, 5);
   }, [tasks, projects, searchTerm]);
 
-  const handleMarkAsDone = async (taskId) => {
+  const updateTaskStatus = async (taskId, newStatus) => {
     setUpdatingTaskId(taskId);
 
     const { error } = await supabase
       .from("tasks")
-      .update({ status: "Done" })
+      .update({ status: newStatus })
       .eq("id", taskId);
 
     if (!error) {
@@ -157,6 +157,22 @@ function DashboardPage() {
     }
 
     setUpdatingTaskId(null);
+  };
+
+  const getNextStatusAction = (currentStatus) => {
+    if (currentStatus === "Done") {
+      return {
+        label: "Mark as To Do",
+        status: "To Do",
+        className: "project-status-btn",
+      };
+    }
+
+    return {
+      label: "Mark as Done",
+      status: "Done",
+      className: "project-status-btn btn-success-soft",
+    };
   };
 
   return (
@@ -276,6 +292,7 @@ function DashboardPage() {
                     {filteredTasks.map((task) => {
                       const project = getProjectById(task.project_id);
                       const projectColor = project?.color || "purple";
+                      const statusAction = getNextStatusAction(task.status);
 
                       return (
                         <div
@@ -292,18 +309,6 @@ function DashboardPage() {
                                   {project?.name || "Unknown Project"}
                                 </p>
                               </div>
-
-                              {task.status !== "Done" && (
-                                <button
-                                  className="btn btn-success task-done-btn"
-                                  onClick={() => handleMarkAsDone(task.id)}
-                                  disabled={updatingTaskId === task.id}
-                                >
-                                  {updatingTaskId === task.id
-                                    ? "Updating..."
-                                    : "Mark as Done"}
-                                </button>
-                              )}
                             </div>
 
                             <div className="dashboard-task-meta">
@@ -311,6 +316,29 @@ function DashboardPage() {
                               <span className="task-date-badge">
                                 Due: {task.due_date || "No due date"}
                               </span>
+                            </div>
+
+                            <div className="project-task-actions project-task-actions-row">
+                              <button
+                                type="button"
+                                className="project-status-btn active"
+                                onClick={() => navigate(`/projects/${task.project_id}`)}
+                              >
+                                View Project
+                              </button>
+
+                              <button
+                                type="button"
+                                className={statusAction.className}
+                                onClick={() =>
+                                  updateTaskStatus(task.id, statusAction.status)
+                                }
+                                disabled={updatingTaskId === task.id}
+                              >
+                                {updatingTaskId === task.id
+                                  ? "Updating..."
+                                  : statusAction.label}
+                              </button>
                             </div>
                           </div>
                         </div>

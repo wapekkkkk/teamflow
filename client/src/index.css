@@ -1135,3 +1135,127 @@ button {
     min-width: 38px;
   }
 }
+.all-tasks-toolbar {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.all-tasks-search-wrap {
+  max-width: 460px;
+}
+
+.all-tasks-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.filter-tab {
+  padding: 10px 16px;
+  border-radius: 999px;
+  cursor: pointer;
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--text-soft);
+  border: 1px solid var(--border);
+  transition: 0.18s ease;
+}
+
+.filter-tab:hover {
+  color: var(--text-main);
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.filter-tab.active {
+  background: var(--primary);
+  color: white;
+  border-color: transparent;
+}
+
+.task-project-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 8px 14px;
+  border-radius: 999px;
+  font-size: 0.82rem;
+  font-weight: 600;
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--text-main);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+@media (max-width: 700px) {
+  .all-tasks-search-wrap {
+    max-width: 100%;
+  }
+}
+
+.project-task-actions-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 14px;
+}
+
+.btn-success-soft {
+  background: rgba(34, 197, 94, 0.16);
+  color: #86efac;
+  border: 1px solid rgba(34, 197, 94, 0.28);
+}
+
+.btn-success-soft:hover {
+  background: rgba(34, 197, 94, 0.24);
+  color: #bbf7d0;
+}
+
+@media (max-width: 700px) {
+  .project-task-actions-row {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .project-task-actions-row .project-status-btn {
+    width: 100%;
+  }
+}
+.task-details-grid {
+  display: grid;
+  grid-template-columns: 1.4fr 1fr;
+  gap: 20px;
+}
+
+.task-details-actions {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.task-summary-list {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  margin-top: 12px;
+}
+
+.task-summary-item {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 14px;
+  border-radius: 12px;
+  background: var(--bg-card-soft);
+  border: 1px solid var(--border);
+}
+
+.task-summary-label {
+  color: var(--text-soft);
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+@media (max-width: 1100px) {
+  .task-details-grid {
+    grid-template-columns: 1fr;
+  }
+}
