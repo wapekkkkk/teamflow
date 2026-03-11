@@ -303,7 +303,17 @@ function DashboardPage() {
 
                           <div className="dashboard-task-content">
                             <div className="dashboard-task-top">
-                              <div>
+                              <div
+                                className="project-task-main"
+                                onClick={() => navigate(`/tasks/${task.id}`)}
+                                role="button"
+                                tabIndex={0}
+                                onKeyDown={(e) => {
+                                  if (e.key === "Enter" || e.key === " ") {
+                                    navigate(`/tasks/${task.id}`);
+                                  }
+                                }}
+                              >
                                 <h3>{task.title}</h3>
                                 <p className="dashboard-task-project">
                                   {project?.name || "Unknown Project"}

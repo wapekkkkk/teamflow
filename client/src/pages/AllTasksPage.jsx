@@ -166,6 +166,7 @@ function AllTasksPage() {
   const handleOpenProject = (projectId) => {
     navigate(`/projects/${projectId}`);
   };
+
   const handleOpenTask = (taskId) => {
   navigate(`/tasks/${taskId}`);
 };
@@ -231,7 +232,7 @@ function AllTasksPage() {
                 return (
                   <div
                     key={task.id}
-                    className={`project-task-card task-theme-${projectColor}`}
+                    className={`dashboard-task-card task-theme-${projectColor}`}
                   >
                     <div className="task-color-bar"></div>
 
@@ -239,7 +240,7 @@ function AllTasksPage() {
                       <div className="project-task-header">
                         <div
                           className="project-task-main"
-                          onClick={() => handleOpenProject(task_id)}
+                          onClick={() => handleOpenTask(task.id)}
                           role="button"
                           tabIndex={0}
                           onKeyDown={(e) => {
