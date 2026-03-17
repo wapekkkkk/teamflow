@@ -153,11 +153,11 @@ function AllTasksPage() {
         keyword === ""
           ? true
           : task.title?.toLowerCase().includes(keyword) ||
-            task.description?.toLowerCase().includes(keyword) ||
-            task.priority?.toLowerCase().includes(keyword) ||
-            task.status?.toLowerCase().includes(keyword) ||
-            task.projects?.name?.toLowerCase().includes(keyword) ||
-            getAssignedMemberLabel(task).toLowerCase().includes(keyword);
+          task.description?.toLowerCase().includes(keyword) ||
+          task.priority?.toLowerCase().includes(keyword) ||
+          task.status?.toLowerCase().includes(keyword) ||
+          task.projects?.name?.toLowerCase().includes(keyword) ||
+          getAssignedMemberLabel(task).toLowerCase().includes(keyword);
 
       return matchesStatus && matchesSearch;
     });
@@ -168,8 +168,8 @@ function AllTasksPage() {
   };
 
   const handleOpenTask = (taskId) => {
-  navigate(`/tasks/${taskId}`);
-};
+    navigate(`/tasks/${taskId}`);
+  };
 
   return (
     <AppLayout>
@@ -201,9 +201,8 @@ function AllTasksPage() {
                   <button
                     key={status}
                     type="button"
-                    className={`filter-tab ${
-                      activeStatus === status ? "active" : ""
-                    }`}
+                    className={`filter-tab ${activeStatus === status ? "active" : ""
+                      }`}
                     onClick={() => setActiveStatus(status)}
                   >
                     {status}
@@ -232,7 +231,7 @@ function AllTasksPage() {
                 return (
                   <div
                     key={task.id}
-                    className={`dashboard-task-card task-theme-${projectColor}`}
+                    className={`all-tasks-card task-theme-${projectColor}`}
                   >
                     <div className="task-color-bar"></div>
 
@@ -245,7 +244,7 @@ function AllTasksPage() {
                           tabIndex={0}
                           onKeyDown={(e) => {
                             if (e.key === "Enter" || e.key === " ") {
-                              handleOpenProject(task_id);
+                              handleOpenTask(task.id);
                             }
                           }}
                         >
@@ -256,45 +255,37 @@ function AllTasksPage() {
                         </div>
                       </div>
 
-                      <div className="project-task-badges">
-                        <span className="task-status-badge">{task.status}</span>
+                      <div className="all-tasks-meta-row">
+                        <div className="project-task-badges">
+                          <span className="task-status-badge">{task.status}</span>
 
-                        <span
-                          className={`task-priority-badge ${getPriorityClass(
-                            task.priority
-                          )}`}
-                        >
-                          {task.priority} Priority
-                        </span>
+                          <span
+                            className={`task-priority-badge ${getPriorityClass(task.priority)}`}
+                          >
+                            {task.priority} Priority
+                          </span>
 
-                        <span className="task-date-badge">
-                          Due: {task.due_date || "No due date"}
-                        </span>
+                          <span className="task-date-badge">
+                            Due: {task.due_date || "No due date"}
+                          </span>
 
-                        <span className="task-member-badge">
-                          {getAssignedMemberLabel(task)}
-                        </span>
+                          <span className="task-member-badge">
+                            {getAssignedMemberLabel(task)}
+                          </span>
 
-                        <span className="task-project-badge">
-                          Project: {task.projects?.name || "Unknown Project"}
-                        </span>
-                      </div>
-
-                      <div className="project-task-actions project-task-actions-row">
-                        <button
-                          type="button"
-                          className="project-status-btn active"
-                          onClick={() => handleOpenProject(task.project_id)}
-                        >
-                          View Project
-                        </button>
+                          <button
+                            type="button"
+                            className="task-project-badge task-project-badge-button"
+                            onClick={() => handleOpenProject(task.project_id)}
+                          >
+                            Project: {task.projects?.name || "Unknown Project"}
+                          </button>
+                        </div>
 
                         <button
                           type="button"
                           className={statusAction.className}
-                          onClick={() =>
-                            updateTaskStatus(task.id, statusAction.status)
-                          }
+                          onClick={() => updateTaskStatus(task.id, statusAction.status)}
                         >
                           {statusAction.label}
                         </button>

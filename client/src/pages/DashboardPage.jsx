@@ -2,6 +2,42 @@ import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "../lib/supabaseClient";
 import AppLayout from "../components/AppLayout";
+import DashboardNotesSidebar from "../components/DashboardNotesSidebar";
+
+function DashboardCompactTaskCard({ task, project, onOpenTask, onOpenProject }) {
+  const projectColor = project?.color || "purple";
+
+  return (
+    <div className={`dashboard-compact-task-card task-theme-${projectColor}`}>
+      <div className="task-color-bar"></div>
+
+      <div className="dashboard-compact-task-content">
+        <button
+          type="button"
+          className="dashboard-compact-task-main"
+          onClick={() => onOpenTask(task.id)}
+        >
+          <h3>{task.title}</h3>
+          <p>{project?.name || "Unknown Project"}</p>
+        </button>
+
+        <div className="dashboard-compact-task-footer">
+          <span className="task-date-badge">
+            {task.due_date ? `Due: ${task.due_date}` : "No due date"}
+          </span>
+
+          <button
+            type="button"
+            className="dashboard-mini-link"
+            onClick={() => onOpenProject(task.project_id)}
+          >
+            View
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
 
 function DashboardPage() {
   const navigate = useNavigate();
@@ -10,7 +46,6 @@ function DashboardPage() {
   const [projects, setProjects] = useState([]);
   const [tasks, setTasks] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
-  const [updatingTaskId, setUpdatingTaskId] = useState(null);
   const [stats, setStats] = useState({
     totalProjects: 0,
     totalTasks: 0,
@@ -129,54 +164,48 @@ function DashboardPage() {
   const filteredTasks = useMemo(() => {
     const keyword = searchTerm.trim().toLowerCase();
 
-    let baseTasks = tasks;
+    if (!keyword) return tasks;
 
-    if (keyword) {
-      baseTasks = tasks.filter((task) => {
-        const project = getProjectById(task.project_id);
-        const titleMatch = task.title?.toLowerCase().includes(keyword);
-        const projectMatch = project?.name?.toLowerCase().includes(keyword);
-        const descMatch = task.description?.toLowerCase().includes(keyword);
-        return titleMatch || projectMatch || descMatch;
-      });
-    }
-
-    return baseTasks.slice(0, 5);
+    return tasks.filter((task) => {
+      const project = getProjectById(task.project_id);
+      const titleMatch = task.title?.toLowerCase().includes(keyword);
+      const projectMatch = project?.name?.toLowerCase().includes(keyword);
+      const descMatch = task.description?.toLowerCase().includes(keyword);
+      return titleMatch || projectMatch || descMatch;
+    });
   }, [tasks, projects, searchTerm]);
 
-  const updateTaskStatus = async (taskId, newStatus) => {
-    setUpdatingTaskId(taskId);
+  const dueSoonTasks = useMemo(() => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
 
-    const { error } = await supabase
-      .from("tasks")
-      .update({ status: newStatus })
-      .eq("id", taskId);
+    return filteredTasks
+      .filter((task) => {
+        if (!task.due_date || task.status === "Done") return false;
+        const dueDate = new Date(task.due_date);
+        const diffDays = Math.ceil((dueDate - today) / (1000 * 60 * 60 * 24));
+        return diffDays >= 0 && diffDays <= 7;
+      })
+      .sort((a, b) => new Date(a.due_date) - new Date(b.due_date))
+      .slice(0, 4);
+  }, [filteredTasks]);
 
-    if (!error) {
-      await loadDashboardData();
-    }
+  const todoPreviewTasks = useMemo(() => {
+    return filteredTasks
+      .filter((task) => task.status === "To Do")
+      .slice(0, 4);
+  }, [filteredTasks]);
 
-    setUpdatingTaskId(null);
-  };
+  const inProgressPreviewTasks = useMemo(() => {
+    return filteredTasks
+      .filter((task) => task.status === "In Progress")
+      .slice(0, 4);
+  }, [filteredTasks]);
 
-  const getNextStatusAction = (currentStatus) => {
-    if (currentStatus === "Done") {
-      return {
-        label: "Mark as To Do",
-        status: "To Do",
-        className: "project-status-btn",
-      };
-    }
 
-    return {
-      label: "Mark as Done",
-      status: "Done",
-      className: "project-status-btn btn-success-soft",
-    };
-  };
 
   return (
-    <AppLayout>
+    <AppLayout rightSidebar={<DashboardNotesSidebar />}>
       <div className="app-page">
         <div className="app-shell">
           <div className="top-bar">
@@ -282,78 +311,87 @@ function DashboardPage() {
 
               <div className="dashboard-section">
                 <div className="section-header section-header-row">
-                  <h2>Recent Tasks</h2>
+                  <h2>My Tasks</h2>
+                  <button
+                    className="link-button"
+                    onClick={() => navigate("/tasks")}
+                  >
+                    View All
+                  </button>
                 </div>
 
                 {filteredTasks.length === 0 ? (
                   <p className="muted">No matching tasks found.</p>
                 ) : (
-                  <div className="dashboard-task-list">
-                    {filteredTasks.map((task) => {
-                      const project = getProjectById(task.project_id);
-                      const projectColor = project?.color || "purple";
-                      const statusAction = getNextStatusAction(task.status);
+                  <div className="dashboard-mini-board">
+                    <div className="dashboard-mini-column card">
+                      <div className="dashboard-mini-column-header">
+                        <h3>To Do</h3>
+                        <span>{todoPreviewTasks.length}</span>
+                      </div>
 
-                      return (
-                        <div
-                          key={task.id}
-                          className={`dashboard-task-card task-theme-${projectColor}`}
-                        >
-                          <div className="task-color-bar"></div>
+                      <div className="dashboard-mini-column-body">
+                        {todoPreviewTasks.length === 0 ? (
+                          <p className="muted">No tasks</p>
+                        ) : (
+                          todoPreviewTasks.map((task) => (
+                            <DashboardCompactTaskCard
+                              key={task.id}
+                              task={task}
+                              project={getProjectById(task.project_id)}
+                              onOpenTask={(taskId) => navigate(`/tasks/${taskId}`)}
+                              onOpenProject={(projectId) => navigate(`/projects/${projectId}`)}
+                            />
+                          ))
+                        )}
+                      </div>
+                    </div>
 
-                          <div className="dashboard-task-content">
-                            <div className="dashboard-task-top">
-                              <div
-                                className="project-task-main"
-                                onClick={() => navigate(`/tasks/${task.id}`)}
-                                role="button"
-                                tabIndex={0}
-                                onKeyDown={(e) => {
-                                  if (e.key === "Enter" || e.key === " ") {
-                                    navigate(`/tasks/${task.id}`);
-                                  }
-                                }}
-                              >
-                                <h3>{task.title}</h3>
-                                <p className="dashboard-task-project">
-                                  {project?.name || "Unknown Project"}
-                                </p>
-                              </div>
-                            </div>
+                    <div className="dashboard-mini-column card">
+                      <div className="dashboard-mini-column-header">
+                        <h3>In Progress</h3>
+                        <span>{inProgressPreviewTasks.length}</span>
+                      </div>
 
-                            <div className="dashboard-task-meta">
-                              <span className="task-status-badge">{task.status}</span>
-                              <span className="task-date-badge">
-                                Due: {task.due_date || "No due date"}
-                              </span>
-                            </div>
+                      <div className="dashboard-mini-column-body">
+                        {inProgressPreviewTasks.length === 0 ? (
+                          <p className="muted">No tasks</p>
+                        ) : (
+                          inProgressPreviewTasks.map((task) => (
+                            <DashboardCompactTaskCard
+                              key={task.id}
+                              task={task}
+                              project={getProjectById(task.project_id)}
+                              onOpenTask={(taskId) => navigate(`/tasks/${taskId}`)}
+                              onOpenProject={(projectId) => navigate(`/projects/${projectId}`)}
+                            />
+                          ))
+                        )}
+                      </div>
+                    </div>
 
-                            <div className="project-task-actions project-task-actions-row">
-                              <button
-                                type="button"
-                                className="project-status-btn active"
-                                onClick={() => navigate(`/projects/${task.project_id}`)}
-                              >
-                                View Project
-                              </button>
+                    <div className="dashboard-mini-column card">
+                      <div className="dashboard-mini-column-header">
+                        <h3>Due Soon</h3>
+                        <span>{dueSoonTasks.length}</span>
+                      </div>
 
-                              <button
-                                type="button"
-                                className={statusAction.className}
-                                onClick={() =>
-                                  updateTaskStatus(task.id, statusAction.status)
-                                }
-                                disabled={updatingTaskId === task.id}
-                              >
-                                {updatingTaskId === task.id
-                                  ? "Updating..."
-                                  : statusAction.label}
-                              </button>
-                            </div>
-                          </div>
-                        </div>
-                      );
-                    })}
+                      <div className="dashboard-mini-column-body">
+                        {dueSoonTasks.length === 0 ? (
+                          <p className="muted">No tasks</p>
+                        ) : (
+                          dueSoonTasks.map((task) => (
+                            <DashboardCompactTaskCard
+                              key={task.id}
+                              task={task}
+                              project={getProjectById(task.project_id)}
+                              onOpenTask={(taskId) => navigate(`/tasks/${taskId}`)}
+                              onOpenProject={(projectId) => navigate(`/projects/${projectId}`)}
+                            />
+                          ))
+                        )}
+                      </div>
+                    </div>
                   </div>
                 )}
               </div>
