@@ -3,38 +3,18 @@ import { useNavigate } from "react-router-dom";
 import { supabase } from "../lib/supabaseClient";
 import AppLayout from "../components/AppLayout";
 
-const PROJECT_COLORS = [
-  "purple",
-  "blue",
-  "red",
-  "green",
-  "orange",
-  "pink",
-  "teal",
-  "yellow",
-];
-
 function ProjectsPage() {
   const navigate = useNavigate();
 
-  const [user, setUser] = useState(null);
   const [projects, setProjects] = useState([]);
-  const [availableMembers, setAvailableMembers] = useState([]);
-  const [selectedMemberIds, setSelectedMemberIds] = useState([]);
-  const [formData, setFormData] = useState({
-    name: "",
-    description: "",
-    due_date: "",
-    color: "purple",
-  });
   const [message, setMessage] = useState("");
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    checkUserAndFetchData();
+    checkUserAndFetchProjects();
   }, []);
 
-  const checkUserAndFetchData = async () => {
+  const checkUserAndFetchProjects = async () => {
     const {
       data: { user },
     } = await supabase.auth.getUser();
@@ -44,9 +24,8 @@ function ProjectsPage() {
       return;
     }
 
-    setUser(user);
     await fetchProjects(user.id);
-    await fetchAcceptedConnections(user.id);
+    setLoading(false);
   };
 
   const fetchProjects = async (userId) => {
@@ -96,129 +75,62 @@ function ProjectsPage() {
     mergedMap.set(project.id, project);
   });
 
-  setProjects(Array.from(mergedMap.values()));
-};
+  const mergedProjects = Array.from(mergedMap.values());
 
-  const fetchAcceptedConnections = async (userId) => {
-    const { data, error } = await supabase
-      .from("member_requests")
-      .select(`
-        id,
-        sender_id,
-        receiver_id,
-        status,
-        sender:profiles!member_requests_sender_id_fkey (
-          id,
-          full_name,
-          email
-        ),
-        receiver:profiles!member_requests_receiver_id_fkey (
-          id,
-          full_name,
-          email
-        )
-      `)
-      .or(`sender_id.eq.${userId},receiver_id.eq.${userId}`)
-      .eq("status", "accepted");
+  if (mergedProjects.length === 0) {
+    setProjects([]);
+    return;
+  }
 
-    if (error) {
-      setMessage(error.message);
-      return;
-    }
+  const projectIds = mergedProjects.map((project) => project.id);
 
-    const normalizedMembers = (data || []).map((request) => {
-      const isSender = request.sender_id === userId;
-      return isSender ? request.receiver : request.sender;
-    });
+  const { data: allProjectMembers, error: membersError } = await supabase
+    .from("project_members")
+    .select("project_id")
+    .in("project_id", projectIds);
 
-    setAvailableMembers(normalizedMembers);
-  };
+  if (membersError) {
+    setMessage(membersError.message);
+    return;
+  }
 
-  const handleChange = (e) => {
-    setFormData((prev) => ({
-      ...prev,
-      [e.target.name]: e.target.value,
-    }));
-  };
+  const { data: allTasks, error: tasksError } = await supabase
+    .from("tasks")
+    .select("project_id, status")
+    .in("project_id", projectIds);
 
-  const handleColorSelect = (color) => {
-    setFormData((prev) => ({
-      ...prev,
-      color,
-    }));
-  };
+  if (tasksError) {
+    setMessage(tasksError.message);
+    return;
+  }
 
-  const handleMemberToggle = (memberId) => {
-    setSelectedMemberIds((prev) =>
-      prev.includes(memberId)
-        ? prev.filter((id) => id !== memberId)
-        : [...prev, memberId]
+  const enrichedProjects = mergedProjects.map((project) => {
+    const memberCount = (allProjectMembers || []).filter(
+      (member) => member.project_id === project.id
+    ).length;
+
+    const projectTasks = (allTasks || []).filter(
+      (task) => task.project_id === project.id
     );
-  };
 
-  const handleCreateProject = async (e) => {
-    e.preventDefault();
-    setLoading(true);
-    setMessage("");
+    const taskCount = projectTasks.length;
 
-    if (!user) {
-      setMessage("User not found.");
-      setLoading(false);
-      return;
-    }
+    const doneCount = projectTasks.filter(
+      (task) => task.status === "Done"
+    ).length;
 
-    const { name, description, due_date, color } = formData;
+    const progress = taskCount === 0 ? 0 : Math.round((doneCount / taskCount) * 100);
 
-    const { data: insertedProject, error } = await supabase
-      .from("projects")
-      .insert([
-        {
-          name,
-          description,
-          due_date: due_date || null,
-          color,
-          owner_id: user.id,
-        },
-      ])
-      .select()
-      .single();
+    return {
+      ...project,
+      memberCount,
+      taskCount,
+      progress,
+    };
+  });
 
-    if (error) {
-      setMessage(error.message);
-      setLoading(false);
-      return;
-    }
-
-    const uniqueMemberIds = Array.from(new Set([user.id, ...selectedMemberIds]));
-
-const projectMemberRows = uniqueMemberIds.map((memberId) => ({
-  project_id: insertedProject.id,
-  user_id: memberId,
-  role: memberId === user.id ? "owner" : "member",
-}));
-
-const { error: memberError } = await supabase
-  .from("project_members")
-  .insert(projectMemberRows);
-
-if (memberError) {
-  setMessage(memberError.message);
-  setLoading(false);
-  return;
-}
-
-    setFormData({
-      name: "",
-      description: "",
-      due_date: "",
-      color: "purple",
-    });
-    setSelectedMemberIds([]);
-
-    setMessage("Project created successfully.");
-    await fetchProjects(user.id);
-    setLoading(false);
-  };
+  setProjects(enrichedProjects);
+};
 
   return (
     <AppLayout>
@@ -226,131 +138,83 @@ if (memberError) {
         <div className="app-shell">
           <div className="top-bar">
             <div>
-              <h1 className="page-title">Projects</h1>
+              <h1 className="page-title">My Projects</h1>
               <p className="page-subtitle">Manage and organize your work.</p>
             </div>
+
+            <button
+              className="btn"
+              onClick={() => navigate("/projects/new")}
+            >
+              New Project
+            </button>
           </div>
 
-          <div className="two-col-grid">
-            <div className="card section-card">
-              <h2>Create Project</h2>
+          {message && <p className="message">{message}</p>}
 
-              <form onSubmit={handleCreateProject} className="form">
-                <input
-                  type="text"
-                  name="name"
-                  placeholder="Project Name"
-                  value={formData.name}
-                  onChange={handleChange}
-                  required
-                  className="input"
-                />
-
-                <textarea
-                  name="description"
-                  placeholder="Project Description"
-                  value={formData.description}
-                  onChange={handleChange}
-                  className="textarea"
-                />
-
-                <input
-                  type="date"
-                  name="due_date"
-                  value={formData.due_date}
-                  onChange={handleChange}
-                  className="input"
-                />
-
-                <div className="color-picker-group">
-                  <p className="color-picker-label">Project Color</p>
-                  <div className="color-picker">
-                    {PROJECT_COLORS.map((color) => (
-                      <button
-                        key={color}
-                        type="button"
-                        className={`color-circle color-${color} ${
-                          formData.color === color ? "selected" : ""
-                        }`}
-                        onClick={() => handleColorSelect(color)}
-                        aria-label={`Choose ${color} color`}
-                      />
-                    ))}
-                  </div>
-                </div>
-
-                <div className="member-select-group">
-                  <p className="color-picker-label">Select Members</p>
-
-                  {availableMembers.length === 0 ? (
-                    <p className="muted">
-                      No accepted members yet. Send and accept member requests first.
-                    </p>
-                  ) : (
-                    <div className="member-checkbox-list">
-                      {availableMembers.map((member) => (
-                        <label key={member.id} className="member-checkbox-item">
-                          <input
-                            type="checkbox"
-                            checked={selectedMemberIds.includes(member.id)}
-                            onChange={() => handleMemberToggle(member.id)}
-                          />
-                          <span>
-                            {member.full_name || member.email}{" "}
-                            <span className="muted">({member.email})</span>
-                          </span>
-                        </label>
-                      ))}
-                    </div>
-                  )}
-                </div>
-
-                <button type="submit" disabled={loading} className="btn">
-                  {loading ? "Creating..." : "Create Project"}
+          <div className="projects-page-list-wrap">
+            {loading ? (
+              <p className="muted">Loading projects...</p>
+            ) : projects.length === 0 ? (
+              <div className="empty-state">
+                <h3>No projects yet</h3>
+                <p className="muted">
+                  Start by creating your first project.
+                </p>
+                <button
+                  className="btn"
+                  onClick={() => navigate("/projects/new")}
+                >
+                  Create New Project
                 </button>
-              </form>
+              </div>
+            ) : (
+              <div className="project-list">
+                {projects.map((project) => (
+                  <div
+  key={project.id}
+  className={`project-overview-card project-theme-${project.color || "purple"}`}
+  onClick={() => navigate(`/projects/${project.id}`)}
+>
+  <div className="project-overview-top">
+    <div>
+      <h3 className="project-overview-title">{project.name}</h3>
+      <p className="project-overview-description">
+        {project.description || "No description"}
+      </p>
+    </div>
 
-              {message && <p className="message">{message}</p>}
-            </div>
+    <button
+      type="button"
+      className="project-overview-menu"
+      onClick={(e) => {
+        e.stopPropagation();
+      }}
+      aria-label="Project options"
+    >
+      ⋮
+    </button>
+  </div>
 
-            <div className="card section-card">
-              <h2>My Projects</h2>
+  <div className="project-overview-meta">
+    <p>{project.memberCount} members</p>
+    <p>{project.taskCount} tasks</p>
+  </div>
 
-              {projects.length === 0 ? (
-                <p className="muted">No projects yet.</p>
-              ) : (
-                <div className="project-list">
-                  {projects.map((project) => (
-                    <div
-                      key={project.id}
-                      className={`project-item project-item-${project.color || "purple"}`}
-                      onClick={() => navigate(`/projects/${project.id}`)}
-                    >
-                      <div className="project-item-header">
-                        <span
-                          className={`project-color-dot color-${project.color || "purple"}`}
-                        ></span>
-                        <h3>{project.name}</h3>
-                      </div>
+  <div className="project-progress-bar">
+    <div
+      className="project-progress-fill"
+      style={{ width: `${project.progress}%` }}
+    ></div>
+  </div>
 
-                      <p className="muted">
-                        {project.description || "No description"}
-                      </p>
-
-                      <p>
-                        <strong>Due Date:</strong>{" "}
-                        {project.due_date ? project.due_date : "No due date"}
-                      </p>
-
-                      <p>
-                        <strong>Created:</strong>{" "}
-                        {new Date(project.created_at).toLocaleString()}
-                      </p>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
+  <p className="project-overview-progress-text">
+    {project.progress}% Completed
+  </p>
+</div>
+                ))}
+              </div>
+            )}
           </div>
         </div>
       </div>

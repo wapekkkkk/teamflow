@@ -1743,3 +1743,128 @@ button {
   color: #fca5a5;
   border: 1px solid rgba(239, 68, 68, 0.25);
 }
+.app-shell-narrow {
+  max-width: 980px;
+}
+
+.create-project-card {
+  max-width: 100%;
+}
+
+.field-label {
+  display: block;
+  margin-bottom: 8px;
+  color: var(--text-main);
+  font-weight: 600;
+  font-size: 0.8rem;
+}
+
+.create-project-actions {
+  display: flex;
+  justify-content: center;
+  margin-top: 10px;
+}
+
+.empty-state {
+  padding: 30px 12px;
+  text-align: center;
+}
+
+.empty-state h3 {
+  margin-top: 0;
+  margin-bottom: 8px;
+}
+
+.empty-state .btn {
+  margin-top: 14px;
+}
+.project-overview-card {
+  border-radius: 22px;
+  padding: 18px 18px 16px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: var(--shadow);
+  cursor: pointer;
+  transition: transform 0.18s ease, border-color 0.18s ease, box-shadow 0.18s ease;
+}
+
+.project-overview-card:hover {
+  transform: translateY(-2px);
+  border-color: rgba(255, 255, 255, 0.18);
+}
+
+.project-overview-top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 10px;
+}
+
+.project-overview-title {
+  margin: 0 0 6px 0;
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: #ffffff;
+}
+
+.project-overview-description {
+  margin: 0;
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 0.8rem;
+}
+
+.project-overview-menu {
+  background: transparent;
+  color: #ffffff;
+  font-size: 2rem;
+  line-height: 1;
+  padding: 0 4px;
+  cursor: pointer;
+  border: none;
+}
+
+.project-overview-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 10px;
+}
+
+.project-overview-meta p {
+  margin: 0;
+  color: rgba(255, 255, 255, 0.78);
+  font-size: 0.8rem;
+}
+
+.project-progress-bar {
+  width: 100%;
+  height: 10px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.22);
+  overflow: hidden;
+  margin-bottom: 12px;
+}
+
+.project-progress-fill {
+  height: 100%;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.95);
+  transition: width 0.25s ease;
+}
+
+.project-overview-progress-text {
+  margin: 0;
+  color: rgba(255, 255, 255, 0.78);
+  font-size: 0.8rem;
+}
+.projects-page-list-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+.project-list {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  margin-top: 0;
+}
