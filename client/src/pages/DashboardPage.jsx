@@ -59,82 +59,123 @@ function DashboardPage() {
   }, []);
 
   const loadDashboardData = async () => {
-    setLoading(true);
+  setLoading(true);
 
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
 
-    if (!user) {
-      navigate("/login");
-      return;
-    }
+  if (!user) {
+    navigate("/login");
+    return;
+  }
 
-    setUserEmail(user.email);
+  setUserEmail(user.email);
 
-    const { data: projectData, error: projectsError } = await supabase
+  const { data: ownedProjects, error: ownedProjectsError } = await supabase
+    .from("projects")
+    .select("*")
+    .eq("owner_id", user.id)
+    .order("created_at", { ascending: false });
+
+  if (ownedProjectsError) {
+    setLoading(false);
+    return;
+  }
+
+  const { data: memberships, error: membershipError } = await supabase
+    .from("project_members")
+    .select("project_id")
+    .eq("user_id", user.id);
+
+  if (membershipError) {
+    setLoading(false);
+    return;
+  }
+
+  const memberProjectIds = (memberships || []).map((item) => item.project_id);
+
+  let memberProjects = [];
+
+  if (memberProjectIds.length > 0) {
+    const { data, error } = await supabase
       .from("projects")
       .select("*")
-      .eq("owner_id", user.id)
+      .in("id", memberProjectIds)
       .order("created_at", { ascending: false });
 
-    if (projectsError) {
+    if (error) {
       setLoading(false);
       return;
     }
 
-    const totalProjects = projectData?.length || 0;
-    setProjects(projectData || []);
+    memberProjects = data || [];
+  }
 
-    if (totalProjects === 0) {
-      setStats({
-        totalProjects: 0,
-        totalTasks: 0,
-        completedTasks: 0,
-        overdueTasks: 0,
-      });
-      setTasks([]);
-      setLoading(false);
-      return;
-    }
+  const projectMap = new Map();
 
-    const projectIds = projectData.map((project) => project.id);
+  [...(ownedProjects || []), ...memberProjects].forEach((project) => {
+    projectMap.set(project.id, project);
+  });
 
-    const { data: taskData, error: tasksError } = await supabase
-      .from("tasks")
-      .select("*")
-      .in("project_id", projectIds)
-      .order("created_at", { ascending: false });
+  const allProjects = Array.from(projectMap.values());
+  setProjects(allProjects);
 
-    if (tasksError) {
-      setLoading(false);
-      return;
-    }
+  const totalProjects = allProjects.length;
 
-    const totalTasks = taskData?.length || 0;
-    const completedTasks =
-      taskData?.filter((task) => task.status === "Done").length || 0;
-
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-
-    const overdueTasks =
-      taskData?.filter((task) => {
-        if (!task.due_date || task.status === "Done") return false;
-        const dueDate = new Date(task.due_date);
-        return dueDate < today;
-      }).length || 0;
-
-    setTasks(taskData || []);
+  if (totalProjects === 0) {
     setStats({
-      totalProjects,
-      totalTasks,
-      completedTasks,
-      overdueTasks,
+      totalProjects: 0,
+      totalTasks: 0,
+      completedTasks: 0,
+      overdueTasks: 0,
     });
-
+    setTasks([]);
     setLoading(false);
-  };
+    return;
+  }
+
+  const accessibleProjectIds = allProjects.map((project) => project.id);
+
+  const { data: taskData, error: tasksError } = await supabase
+    .from("tasks")
+    .select("*")
+    .in("project_id", accessibleProjectIds)
+    .order("created_at", { ascending: false });
+
+  if (tasksError) {
+    setLoading(false);
+    return;
+  }
+
+  const visibleTasks = (taskData || []).filter(
+    (task) => task.assigned_to === user.id || task.assigned_to === null
+  );
+
+  const totalTasks = visibleTasks.length;
+  const completedTasks =
+    visibleTasks.filter((task) => task.status === "Done").length || 0;
+
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  const overdueTasks =
+    visibleTasks.filter((task) => {
+      if (!task.due_date || task.status === "Done") return false;
+      const dueDate = new Date(task.due_date);
+      return dueDate < today;
+    }).length || 0;
+
+  setTasks(visibleTasks);
+  setStats({
+    totalProjects,
+    totalTasks,
+    completedTasks,
+    overdueTasks,
+  });
+
+  setLoading(false);
+};
 
   const getProjectById = (projectId) => {
     return projects.find((project) => project.id === projectId);

@@ -50,10 +50,36 @@ function ProjectsPage() {
   };
 
   const fetchProjects = async (userId) => {
+  const { data: ownedProjects, error: ownedError } = await supabase
+    .from("projects")
+    .select("*")
+    .eq("owner_id", userId)
+    .order("created_at", { ascending: false });
+
+  if (ownedError) {
+    setMessage(ownedError.message);
+    return;
+  }
+
+  const { data: memberships, error: membershipError } = await supabase
+    .from("project_members")
+    .select("project_id")
+    .eq("user_id", userId);
+
+  if (membershipError) {
+    setMessage(membershipError.message);
+    return;
+  }
+
+  const memberProjectIds = (memberships || []).map((item) => item.project_id);
+
+  let memberProjects = [];
+
+  if (memberProjectIds.length > 0) {
     const { data, error } = await supabase
       .from("projects")
       .select("*")
-      .eq("owner_id", userId)
+      .in("id", memberProjectIds)
       .order("created_at", { ascending: false });
 
     if (error) {
@@ -61,8 +87,17 @@ function ProjectsPage() {
       return;
     }
 
-    setProjects(data || []);
-  };
+    memberProjects = data || [];
+  }
+
+  const mergedMap = new Map();
+
+  [...(ownedProjects || []), ...memberProjects].forEach((project) => {
+    mergedMap.set(project.id, project);
+  });
+
+  setProjects(Array.from(mergedMap.values()));
+};
 
   const fetchAcceptedConnections = async (userId) => {
     const { data, error } = await supabase
@@ -154,23 +189,23 @@ function ProjectsPage() {
       return;
     }
 
-    if (selectedMemberIds.length > 0) {
-      const projectMemberRows = selectedMemberIds.map((memberId) => ({
-        project_id: insertedProject.id,
-        user_id: memberId,
-        role: "member",
-      }));
+    const uniqueMemberIds = Array.from(new Set([user.id, ...selectedMemberIds]));
 
-      const { error: memberError } = await supabase
-        .from("project_members")
-        .insert(projectMemberRows);
+const projectMemberRows = uniqueMemberIds.map((memberId) => ({
+  project_id: insertedProject.id,
+  user_id: memberId,
+  role: memberId === user.id ? "owner" : "member",
+}));
 
-      if (memberError) {
-        setMessage(memberError.message);
-        setLoading(false);
-        return;
-      }
-    }
+const { error: memberError } = await supabase
+  .from("project_members")
+  .insert(projectMemberRows);
+
+if (memberError) {
+  setMessage(memberError.message);
+  setLoading(false);
+  return;
+}
 
     setFormData({
       name: "",
@@ -279,7 +314,7 @@ function ProjectsPage() {
             </div>
 
             <div className="card section-card">
-              <h2>Your Projects</h2>
+              <h2>My Projects</h2>
 
               {projects.length === 0 ? (
                 <p className="muted">No projects yet.</p>

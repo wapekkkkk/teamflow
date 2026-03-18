@@ -1707,3 +1707,39 @@ button {
     grid-template-columns: 1fr;
   }
 }
+.project-task-mine {
+  border-left: 5px solid #22c55e;
+  box-shadow: inset 0 0 0 1px rgba(34, 197, 94, 0.15);
+}
+
+.project-task-unassigned {
+  border-left: 5px solid #3b82f6;
+  box-shadow: inset 0 0 0 1px rgba(59, 130, 246, 0.15);
+}
+
+.project-task-other {
+  border-left: 5px solid #ef4444;
+  box-shadow: inset 0 0 0 1px rgba(239, 68, 68, 0.15);
+}
+
+.project-task-locked {
+  opacity: 0.88;
+}
+
+.task-member-badge-mine {
+  background: rgba(34, 197, 94, 0.18);
+  color: #86efac;
+  border: 1px solid rgba(34, 197, 94, 0.25);
+}
+
+.task-member-badge-unassigned {
+  background: rgba(59, 130, 246, 0.18);
+  color: #93c5fd;
+  border: 1px solid rgba(59, 130, 246, 0.25);
+}
+
+.task-member-badge-other {
+  background: rgba(239, 68, 68, 0.16);
+  color: #fca5a5;
+  border: 1px solid rgba(239, 68, 68, 0.25);
+}

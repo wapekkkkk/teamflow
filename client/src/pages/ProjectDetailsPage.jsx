@@ -19,12 +19,18 @@ const COLUMN_CONFIG = [
 function SortableTaskCard({
   task,
   projectColor,
+  currentUserId,
+  projectOwnerId,
   getAssignedMemberLabel,
   onOpenTask,
 }) {
+  const canDrag = canCurrentUserMoveTask(task, currentUserId, projectOwnerId);
+  const ownershipState = getTaskOwnershipState(task, currentUserId);
+
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } =
     useSortable({
       id: task.id,
+      disabled: !canDrag,
       data: {
         type: "task",
         task,
@@ -47,7 +53,8 @@ function SortableTaskCard({
     <div
       ref={setNodeRef}
       style={style}
-      className={`project-task-card task-theme-${projectColor} ${isDragging ? "dragging-task" : ""}`}
+      className={`project-task-card task-theme-${projectColor} project-task-${ownershipState} ${isDragging ? "dragging-task" : ""
+        } ${!canDrag ? "project-task-locked" : ""}`}
     >
       <div className="task-color-bar"></div>
 
@@ -73,12 +80,13 @@ function SortableTaskCard({
           <button
             type="button"
             className="drag-handle-btn"
-            {...attributes}
-            {...listeners}
-            aria-label={`Drag task ${task.title}`}
-            title="Drag task"
+            {...(canDrag ? attributes : {})}
+            {...(canDrag ? listeners : {})}
+            aria-label={canDrag ? `Drag task ${task.title}` : `Task ${task.title} is locked`}
+            title={canDrag ? "Drag task" : "Locked task"}
+            disabled={!canDrag}
           >
-            ⋮⋮
+            {canDrag ? "⋮⋮" : "🔒"}
           </button>
         </div>
 
@@ -90,15 +98,18 @@ function SortableTaskCard({
           <span className="task-date-badge">
             Due: {task.due_date || "No due date"}
           </span>
-          <span className="task-member-badge">
-            {getAssignedMemberLabel(task.assigned_to)}
+          <span className={`task-member-badge task-member-badge-${ownershipState}`}>
+            {ownershipState === "mine"
+              ? "Assigned to me"
+              : ownershipState === "unassigned"
+                ? "Unassigned"
+                : `Assigned to ${getAssignedMemberLabel(task.assigned_to)}`}
           </span>
         </div>
       </div>
     </div>
   );
 }
-
 function DroppableColumn({ title, columnId, tasks, children }) {
   const { setNodeRef, isOver } = useDroppable({
     id: columnId,
@@ -114,7 +125,23 @@ function DroppableColumn({ title, columnId, tasks, children }) {
     </div>
   );
 }
+function canCurrentUserMoveTask(task, currentUserId, projectOwnerId) {
+  const isOwner = currentUserId === projectOwnerId;
+  const isMine = task.assigned_to === currentUserId;
+  const isUnassigned = !task.assigned_to;
 
+  if (isOwner) return true;
+  if (isMine) return true;
+  if (isUnassigned) return true;
+
+  return false;
+}
+
+function getTaskOwnershipState(task, currentUserId) {
+  if (!task.assigned_to) return "unassigned";
+  if (task.assigned_to === currentUserId) return "mine";
+  return "other";
+}
 function ProjectDetailsPage() {
   const navigate = useNavigate();
   const { projectId } = useParams();
@@ -124,6 +151,8 @@ function ProjectDetailsPage() {
   const [members, setMembers] = useState([]);
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
+  const [currentUserId, setCurrentUserId] = useState("");
+
 
   const [taskForm, setTaskForm] = useState({
     title: "",
@@ -147,25 +176,46 @@ function ProjectDetailsPage() {
       return;
     }
 
-    await fetchProject(user.id);
+    setCurrentUserId(user.id);
+
+    const hasAccess = await fetchProject(user.id);
+
+    if (!hasAccess) return;
+
     await fetchMembers();
     await fetchTasks();
   };
 
   const fetchProject = async (userId) => {
-    const { data, error } = await supabase
+    const { data: projectData, error: projectError } = await supabase
       .from("projects")
       .select("*")
       .eq("id", projectId)
-      .eq("owner_id", userId)
       .single();
 
-    if (error) {
-      setMessage("Project not found or access denied.");
-      return;
+    if (projectError || !projectData) {
+      setMessage("Project not found.");
+      return false;
     }
 
-    setProject(data);
+    const isOwner = projectData.owner_id === userId;
+
+    const { data: membership } = await supabase
+      .from("project_members")
+      .select("id")
+      .eq("project_id", projectId)
+      .eq("user_id", userId)
+      .maybeSingle();
+
+    const isMember = !!membership;
+
+    if (!isOwner && !isMember) {
+      setMessage("Project not found or access denied.");
+      return false;
+    }
+
+    setProject(projectData);
+    return true;
   };
 
   const fetchMembers = async () => {
@@ -277,7 +327,7 @@ function ProjectDetailsPage() {
   const handleDragEnd = async (event) => {
     const { active, over } = event;
 
-    if (!over) return;
+    if (!over || !project) return;
 
     const activeTaskId = active.id;
     let destinationStatus = over.id;
@@ -288,7 +338,19 @@ function ProjectDetailsPage() {
     }
 
     const draggedTask = tasks.find((task) => task.id === activeTaskId);
+
     if (!draggedTask || !destinationStatus || draggedTask.status === destinationStatus) {
+      return;
+    }
+
+    const canMove = canCurrentUserMoveTask(
+      draggedTask,
+      currentUserId,
+      project.owner_id
+    );
+
+    if (!canMove) {
+      setMessage("You do not have permission to move this task.");
       return;
     }
 
@@ -473,6 +535,8 @@ function ProjectDetailsPage() {
                           key={task.id}
                           task={task}
                           projectColor={getProjectColor()}
+                          currentUserId={currentUserId}
+                          projectOwnerId={project?.owner_id}
                           getAssignedMemberLabel={getAssignedMemberLabel}
                           onOpenTask={handleOpenTask}
                         />
