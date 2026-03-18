@@ -246,7 +246,9 @@ function DashboardPage() {
 
 
   return (
-    <AppLayout rightSidebar={<DashboardNotesSidebar />}>
+    <AppLayout rightSidebar={<DashboardNotesSidebar title="Quick Notes" />}
+    defaultRightSidebarCollapsed={false}
+    >
       <div className="app-page">
         <div className="app-shell">
           <div className="top-bar">

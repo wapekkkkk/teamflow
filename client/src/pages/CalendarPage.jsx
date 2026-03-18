@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "../lib/supabaseClient";
 import AppLayout from "../components/AppLayout";
+import DashboardNotesSidebar from "../components/DashboardNotesSidebar";
 
 function CalendarPage() {
   const navigate = useNavigate();
@@ -160,15 +161,15 @@ function CalendarPage() {
   };
 
   return (
-    <AppLayout>
+    <AppLayout rightSidebar={<DashboardNotesSidebar title="Quick Notes" />}
+    defaultRightSidebarCollapsed={true}
+    >
       <div className="app-page">
         <div className="app-shell">
           <div className="top-bar">
             <div>
               <h1 className="page-title">Calendar</h1>
-              <p className="page-subtitle">
-                View task deadlines by month and date.
-              </p>
+            
             </div>
           </div>
 

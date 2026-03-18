@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { supabase } from "../lib/supabaseClient";
 import AppLayout from "../components/AppLayout";
+import DashboardNotesSidebar from "../components/DashboardNotesSidebar";
 import { DndContext, closestCorners, useDroppable } from "@dnd-kit/core";
 import {
   SortableContext,
@@ -59,9 +60,8 @@ function SortableTaskCard({
     <div
       ref={setNodeRef}
       style={style}
-      className={`project-task-card task-theme-${projectColor} project-task-${ownershipState} ${
-        isDragging ? "dragging-task" : ""
-      } ${!canDrag ? "project-task-locked" : ""}`}
+      className={`project-task-card task-theme-${projectColor} project-task-${ownershipState} ${isDragging ? "dragging-task" : ""
+        } ${!canDrag ? "project-task-locked" : ""}`}
     >
       <div className="task-color-bar"></div>
 
@@ -111,8 +111,8 @@ function SortableTaskCard({
             {ownershipState === "mine"
               ? "Assigned to me"
               : ownershipState === "unassigned"
-              ? "Unassigned"
-              : `Assigned to ${getAssignedMemberLabel(task.assigned_to)}`}
+                ? "Unassigned"
+                : `Assigned to ${getAssignedMemberLabel(task.assigned_to)}`}
           </span>
         </div>
       </div>
@@ -358,7 +358,15 @@ function ProjectDetailsPage() {
   const progress = taskCount === 0 ? 0 : Math.round((doneCount / taskCount) * 100);
 
   return (
-    <AppLayout>
+    <AppLayout
+      rightSidebar={
+        <DashboardNotesSidebar
+          title="Project Notes"
+          projectId={projectId}
+        />
+      }
+      defaultRightSidebarCollapsed={true}
+    >
       <div className="app-page">
         <div className="app-shell">
           <div className="top-bar">
