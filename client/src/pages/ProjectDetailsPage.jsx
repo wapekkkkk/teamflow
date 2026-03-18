@@ -27,15 +27,21 @@ function SortableTaskCard({
   const canDrag = canCurrentUserMoveTask(task, currentUserId, projectOwnerId);
   const ownershipState = getTaskOwnershipState(task, currentUserId);
 
-  const { attributes, listeners, setNodeRef, transform, transition, isDragging } =
-    useSortable({
-      id: task.id,
-      disabled: !canDrag,
-      data: {
-        type: "task",
-        task,
-      },
-    });
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({
+    id: task.id,
+    disabled: !canDrag,
+    data: {
+      type: "task",
+      task,
+    },
+  });
 
   const style = {
     transform: CSS.Transform.toString(transform),
@@ -53,8 +59,9 @@ function SortableTaskCard({
     <div
       ref={setNodeRef}
       style={style}
-      className={`project-task-card task-theme-${projectColor} project-task-${ownershipState} ${isDragging ? "dragging-task" : ""
-        } ${!canDrag ? "project-task-locked" : ""}`}
+      className={`project-task-card task-theme-${projectColor} project-task-${ownershipState} ${
+        isDragging ? "dragging-task" : ""
+      } ${!canDrag ? "project-task-locked" : ""}`}
     >
       <div className="task-color-bar"></div>
 
@@ -82,7 +89,9 @@ function SortableTaskCard({
             className="drag-handle-btn"
             {...(canDrag ? attributes : {})}
             {...(canDrag ? listeners : {})}
-            aria-label={canDrag ? `Drag task ${task.title}` : `Task ${task.title} is locked`}
+            aria-label={
+              canDrag ? `Drag task ${task.title}` : `Task ${task.title} is locked`
+            }
             title={canDrag ? "Drag task" : "Locked task"}
             disabled={!canDrag}
           >
@@ -93,7 +102,7 @@ function SortableTaskCard({
         <div className="project-task-badges">
           <span className="task-status-badge">{task.status}</span>
           <span className={`task-priority-badge ${getPriorityClass(task.priority)}`}>
-            {task.priority} Priority
+            {task.priority}
           </span>
           <span className="task-date-badge">
             Due: {task.due_date || "No due date"}
@@ -102,15 +111,16 @@ function SortableTaskCard({
             {ownershipState === "mine"
               ? "Assigned to me"
               : ownershipState === "unassigned"
-                ? "Unassigned"
-                : `Assigned to ${getAssignedMemberLabel(task.assigned_to)}`}
+              ? "Unassigned"
+              : `Assigned to ${getAssignedMemberLabel(task.assigned_to)}`}
           </span>
         </div>
       </div>
     </div>
   );
 }
-function DroppableColumn({ title, columnId, tasks, children }) {
+
+function DroppableColumn({ title, columnId, tasks, children, onCreateTask }) {
   const { setNodeRef, isOver } = useDroppable({
     id: columnId,
   });
@@ -120,11 +130,25 @@ function DroppableColumn({ title, columnId, tasks, children }) {
       ref={setNodeRef}
       className={`card board-column ${isOver ? "board-column-active" : ""}`}
     >
-      <h2 className="board-title">{title}</h2>
+      <div className="board-title-row">
+        <h2 className="board-title">{title}</h2>
+      </div>
+
       {tasks.length === 0 ? <p className="muted">No tasks</p> : children}
+
+      {columnId === "To Do" && (
+        <button
+          type="button"
+          className="btn btn-secondary board-create-task-btn"
+          onClick={onCreateTask}
+        >
+          Create Task
+        </button>
+      )}
     </div>
   );
 }
+
 function canCurrentUserMoveTask(task, currentUserId, projectOwnerId) {
   const isOwner = currentUserId === projectOwnerId;
   const isMine = task.assigned_to === currentUserId;
@@ -142,6 +166,7 @@ function getTaskOwnershipState(task, currentUserId) {
   if (task.assigned_to === currentUserId) return "mine";
   return "other";
 }
+
 function ProjectDetailsPage() {
   const navigate = useNavigate();
   const { projectId } = useParams();
@@ -150,17 +175,7 @@ function ProjectDetailsPage() {
   const [tasks, setTasks] = useState([]);
   const [members, setMembers] = useState([]);
   const [message, setMessage] = useState("");
-  const [loading, setLoading] = useState(false);
   const [currentUserId, setCurrentUserId] = useState("");
-
-
-  const [taskForm, setTaskForm] = useState({
-    title: "",
-    description: "",
-    due_date: "",
-    priority: "Medium",
-    assigned_to: "",
-  });
 
   useEffect(() => {
     checkUserAndLoadData();
@@ -256,51 +271,6 @@ function ProjectDetailsPage() {
     setTasks(data || []);
   };
 
-  const handleChange = (e) => {
-    setTaskForm((prev) => ({
-      ...prev,
-      [e.target.name]: e.target.value,
-    }));
-  };
-
-  const handleCreateTask = async (e) => {
-    e.preventDefault();
-    setLoading(true);
-    setMessage("");
-
-    const { title, description, due_date, priority, assigned_to } = taskForm;
-
-    const { error } = await supabase.from("tasks").insert([
-      {
-        project_id: projectId,
-        title,
-        description,
-        due_date: due_date || null,
-        priority,
-        status: "To Do",
-        assigned_to: assigned_to || null,
-      },
-    ]);
-
-    if (error) {
-      setMessage(error.message);
-      setLoading(false);
-      return;
-    }
-
-    setTaskForm({
-      title: "",
-      description: "",
-      due_date: "",
-      priority: "Medium",
-      assigned_to: "",
-    });
-
-    setMessage("Task created successfully.");
-    await fetchTasks();
-    setLoading(false);
-  };
-
   const updateTaskStatus = async (taskId, newStatus) => {
     const previousTasks = [...tasks];
 
@@ -357,13 +327,12 @@ function ProjectDetailsPage() {
     await updateTaskStatus(activeTaskId, destinationStatus);
   };
 
-  const handleLogout = async () => {
-    await supabase.auth.signOut();
-    navigate("/login");
-  };
-
   const handleOpenTask = (taskId) => {
     navigate(`/tasks/${taskId}`);
+  };
+
+  const handleCreateTaskPage = () => {
+    navigate(`/projects/${projectId}/tasks/new`);
   };
 
   const getAssignedMemberLabel = (assignedToId) => {
@@ -384,9 +353,9 @@ function ProjectDetailsPage() {
     return project?.color || "purple";
   };
 
-  const todoTasks = tasks.filter((task) => task.status === "To Do");
-  const inProgressTasks = tasks.filter((task) => task.status === "In Progress");
-  const doneTasks = tasks.filter((task) => task.status === "Done");
+  const taskCount = tasks.length;
+  const doneCount = tasks.filter((task) => task.status === "Done").length;
+  const progress = taskCount === 0 ? 0 : Math.round((doneCount / taskCount) * 100);
 
   return (
     <AppLayout>
@@ -395,109 +364,67 @@ function ProjectDetailsPage() {
           <div className="top-bar">
             <div>
               <h1 className="page-title">Project Details</h1>
-              <p className="page-subtitle">Manage tasks and members in one place.</p>
             </div>
 
             <div className="top-bar-actions">
-              <button onClick={() => navigate("/projects")} className="btn">
-                Back to Projects
-              </button>
-              <button onClick={handleLogout} className="btn btn-secondary">
-                Logout
+              <button onClick={handleCreateTaskPage} className="btn">
+                New Task
               </button>
             </div>
           </div>
 
           {project && (
             <div
-              className={`card section-card project-details-hero project-theme-${project.color || "purple"}`}
-              style={{ marginBottom: "20px" }}
+              className={`project-details-summary-card project-theme-${project.color || "purple"}`}
             >
-              <h2>{project.name}</h2>
-              <p className="muted">{project.description || "No description"}</p>
-              <p>
-                <strong>Due Date:</strong> {project.due_date || "No due date"}
-              </p>
-              <p>
-                <strong>Created:</strong> {new Date(project.created_at).toLocaleString()}
-              </p>
+              <div className="project-details-summary-top">
+                <div>
+                  <h2 className="project-details-summary-title">{project.name}</h2>
+                  <p className="project-details-summary-description">
+                    {project.description || "No description"}
+                  </p>
+                </div>
+
+                <button
+                  type="button"
+                  className="project-overview-menu"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  ⋮
+                </button>
+              </div>
+
+              <div className="project-details-summary-meta">
+                <p>{members.length} members</p>
+                <p>{taskCount} tasks</p>
+              </div>
+
+              <div className="project-details-progress-bar">
+                <div
+                  className="project-details-progress-fill"
+                  style={{ width: `${progress}%` }}
+                ></div>
+              </div>
+
+              <p className="project-details-progress-text">{progress}% Completed</p>
             </div>
           )}
 
-          <div className="project-top-grid">
-            <div className="card section-card">
-              <h2>Create Task</h2>
+          <div className="project-members-dropdown card section-card">
+            <details>
+              <summary className="project-members-summary">
+                <span>View project members</span>
+                <span className="project-members-summary-icon">⌄</span>
+              </summary>
 
-              <form onSubmit={handleCreateTask} className="form">
-                <input
-                  type="text"
-                  name="title"
-                  placeholder="Task Title"
-                  value={taskForm.title}
-                  onChange={handleChange}
-                  required
-                  className="input"
-                />
-
-                <textarea
-                  name="description"
-                  placeholder="Task Description"
-                  value={taskForm.description}
-                  onChange={handleChange}
-                  className="textarea"
-                />
-
-                <input
-                  type="date"
-                  name="due_date"
-                  value={taskForm.due_date}
-                  onChange={handleChange}
-                  className="input"
-                />
-
-                <select
-                  name="priority"
-                  value={taskForm.priority}
-                  onChange={handleChange}
-                  className="select"
-                >
-                  <option value="Low">Low</option>
-                  <option value="Medium">Medium</option>
-                  <option value="High">High</option>
-                </select>
-
-                <select
-                  name="assigned_to"
-                  value={taskForm.assigned_to}
-                  onChange={handleChange}
-                  className="select"
-                >
-                  <option value="">Unassigned</option>
-                  {members.map((member) => (
-                    <option key={member.user_id} value={member.user_id}>
-                      {member.profiles?.full_name || member.profiles?.email}
-                    </option>
-                  ))}
-                </select>
-
-                <button type="submit" disabled={loading} className="btn">
-                  {loading ? "Creating..." : "Create Task"}
-                </button>
-              </form>
-            </div>
-
-            <div className="card section-card">
-              <h2>Project Members</h2>
-
-              <div className="member-list">
+              <div className="member-list project-members-dropdown-list">
                 {members.length === 0 ? (
                   <p className="muted">No members linked to this project.</p>
                 ) : (
                   members.map((member) => (
                     <div key={member.id} className="member-item">
                       <p>
-                        <strong>Name:</strong>{" "}
-                        {member.profiles?.full_name || "No name"}
+                        <strong>Name:</strong> {member.profiles?.full_name || "No name"}
                       </p>
                       <p>
                         <strong>Email:</strong> {member.profiles?.email}
@@ -509,7 +436,7 @@ function ProjectDetailsPage() {
                   ))
                 )}
               </div>
-            </div>
+            </details>
           </div>
 
           {message && <p className="message">{message}</p>}
@@ -525,6 +452,7 @@ function ProjectDetailsPage() {
                     title={column.title}
                     columnId={column.id}
                     tasks={columnTasks}
+                    onCreateTask={handleCreateTaskPage}
                   >
                     <SortableContext
                       items={columnTasks.map((task) => task.id)}
