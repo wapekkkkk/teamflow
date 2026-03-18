@@ -2,11 +2,13 @@ import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { supabase } from "../lib/supabaseClient";
 import AppLayout from "../components/AppLayout";
-import { DndContext, closestCorners } from "@dnd-kit/core";
-import { SortableContext, useSortable, verticalListSortingStrategy } from "@dnd-kit/sortable";
+import { DndContext, closestCorners, useDroppable } from "@dnd-kit/core";
+import {
+  SortableContext,
+  useSortable,
+  verticalListSortingStrategy,
+} from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { useDroppable } from "@dnd-kit/core";
-
 
 const COLUMN_CONFIG = [
   { id: "To Do", title: "To Do" },
@@ -14,7 +16,12 @@ const COLUMN_CONFIG = [
   { id: "Done", title: "Done" },
 ];
 
-function SortableTaskCard({ task, projectColor, getAssignedMemberLabel, onOpenTask }) {
+function SortableTaskCard({
+  task,
+  projectColor,
+  getAssignedMemberLabel,
+  onOpenTask,
+}) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } =
     useSortable({
       id: task.id,
@@ -125,8 +132,6 @@ function ProjectDetailsPage() {
     priority: "Medium",
     assigned_to: "",
   });
-
-  const [memberEmail, setMemberEmail] = useState("");
 
   useEffect(() => {
     checkUserAndLoadData();
@@ -246,48 +251,6 @@ function ProjectDetailsPage() {
     setLoading(false);
   };
 
-  const handleAddMember = async (e) => {
-    e.preventDefault();
-    setMessage("");
-
-    if (!memberEmail.trim()) {
-      setMessage("Please enter an email.");
-      return;
-    }
-
-    const { data: userProfile, error: profileError } = await supabase
-      .from("profiles")
-      .select("id, full_name, email")
-      .eq("email", memberEmail.trim())
-      .single();
-
-    if (profileError || !userProfile) {
-      setMessage("User not found. They must register first.");
-      return;
-    }
-
-    const { error: memberError } = await supabase.from("project_members").insert([
-      {
-        project_id: projectId,
-        user_id: userProfile.id,
-        role: "member",
-      },
-    ]);
-
-    if (memberError) {
-      if (memberError.message.includes("duplicate")) {
-        setMessage("This user is already a project member.");
-      } else {
-        setMessage(memberError.message);
-      }
-      return;
-    }
-
-    setMemberEmail("");
-    setMessage("Member added successfully.");
-    await fetchMembers();
-  };
-
   const updateTaskStatus = async (taskId, newStatus) => {
     const previousTasks = [...tasks];
 
@@ -317,7 +280,6 @@ function ProjectDetailsPage() {
     if (!over) return;
 
     const activeTaskId = active.id;
-
     let destinationStatus = over.id;
 
     const overTask = tasks.find((task) => task.id === over.id);
@@ -465,23 +427,9 @@ function ProjectDetailsPage() {
             <div className="card section-card">
               <h2>Project Members</h2>
 
-              <form onSubmit={handleAddMember} className="form">
-                <input
-                  type="email"
-                  placeholder="Enter member email"
-                  value={memberEmail}
-                  onChange={(e) => setMemberEmail(e.target.value)}
-                  className="input"
-                  required
-                />
-                <button type="submit" className="btn">
-                  Add Member
-                </button>
-              </form>
-
               <div className="member-list">
                 {members.length === 0 ? (
-                  <p className="muted">No members yet.</p>
+                  <p className="muted">No members linked to this project.</p>
                 ) : (
                   members.map((member) => (
                     <div key={member.id} className="member-item">
@@ -506,60 +454,33 @@ function ProjectDetailsPage() {
 
           <DndContext collisionDetection={closestCorners} onDragEnd={handleDragEnd}>
             <div className="board">
-              <DroppableColumn title="To Do" columnId="To Do" tasks={todoTasks}>
-                <SortableContext
-                  items={todoTasks.map((task) => task.id)}
-                  strategy={verticalListSortingStrategy}
-                >
-                  {todoTasks.map((task) => (
-                    <SortableTaskCard
-                      key={task.id}
-                      task={task}
-                      projectColor={getProjectColor()}
-                      getAssignedMemberLabel={getAssignedMemberLabel}
-                      onOpenTask={handleOpenTask}
-                    />
-                  ))}
-                </SortableContext>
-              </DroppableColumn>
+              {COLUMN_CONFIG.map((column) => {
+                const columnTasks = tasks.filter((task) => task.status === column.id);
 
-              <DroppableColumn
-                title="In Progress"
-                columnId="In Progress"
-                tasks={inProgressTasks}
-              >
-                <SortableContext
-                  items={inProgressTasks.map((task) => task.id)}
-                  strategy={verticalListSortingStrategy}
-                >
-                  {inProgressTasks.map((task) => (
-                    <SortableTaskCard
-                      key={task.id}
-                      task={task}
-                      projectColor={getProjectColor()}
-                      getAssignedMemberLabel={getAssignedMemberLabel}
-                      onOpenTask={handleOpenTask}
-                    />
-                  ))}
-                </SortableContext>
-              </DroppableColumn>
-
-              <DroppableColumn title="Done" columnId="Done" tasks={doneTasks}>
-                <SortableContext
-                  items={doneTasks.map((task) => task.id)}
-                  strategy={verticalListSortingStrategy}
-                >
-                  {doneTasks.map((task) => (
-                    <SortableTaskCard
-                      key={task.id}
-                      task={task}
-                      projectColor={getProjectColor()}
-                      getAssignedMemberLabel={getAssignedMemberLabel}
-                      onOpenTask={handleOpenTask}
-                    />
-                  ))}
-                </SortableContext>
-              </DroppableColumn>
+                return (
+                  <DroppableColumn
+                    key={column.id}
+                    title={column.title}
+                    columnId={column.id}
+                    tasks={columnTasks}
+                  >
+                    <SortableContext
+                      items={columnTasks.map((task) => task.id)}
+                      strategy={verticalListSortingStrategy}
+                    >
+                      {columnTasks.map((task) => (
+                        <SortableTaskCard
+                          key={task.id}
+                          task={task}
+                          projectColor={getProjectColor()}
+                          getAssignedMemberLabel={getAssignedMemberLabel}
+                          onOpenTask={handleOpenTask}
+                        />
+                      ))}
+                    </SortableContext>
+                  </DroppableColumn>
+                );
+              })}
             </div>
           </DndContext>
         </div>

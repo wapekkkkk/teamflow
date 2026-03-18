@@ -37,6 +37,15 @@ function Sidebar() {
           </NavLink>
 
           <NavLink
+            to="/members"
+            className={({ isActive }) =>
+              isActive ? "sidebar-link active" : "sidebar-link"
+            }
+          >
+            Members
+          </NavLink>
+
+          <NavLink
             to="/tasks"
             className={({ isActive }) =>
               isActive ? "sidebar-link active" : "sidebar-link"

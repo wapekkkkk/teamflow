@@ -19,6 +19,8 @@ function ProjectsPage() {
 
   const [user, setUser] = useState(null);
   const [projects, setProjects] = useState([]);
+  const [availableMembers, setAvailableMembers] = useState([]);
+  const [selectedMemberIds, setSelectedMemberIds] = useState([]);
   const [formData, setFormData] = useState({
     name: "",
     description: "",
@@ -29,10 +31,10 @@ function ProjectsPage() {
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    checkUserAndFetchProjects();
+    checkUserAndFetchData();
   }, []);
 
-  const checkUserAndFetchProjects = async () => {
+  const checkUserAndFetchData = async () => {
     const {
       data: { user },
     } = await supabase.auth.getUser();
@@ -43,7 +45,8 @@ function ProjectsPage() {
     }
 
     setUser(user);
-    fetchProjects(user.id);
+    await fetchProjects(user.id);
+    await fetchAcceptedConnections(user.id);
   };
 
   const fetchProjects = async (userId) => {
@@ -61,6 +64,41 @@ function ProjectsPage() {
     setProjects(data || []);
   };
 
+  const fetchAcceptedConnections = async (userId) => {
+    const { data, error } = await supabase
+      .from("member_requests")
+      .select(`
+        id,
+        sender_id,
+        receiver_id,
+        status,
+        sender:profiles!member_requests_sender_id_fkey (
+          id,
+          full_name,
+          email
+        ),
+        receiver:profiles!member_requests_receiver_id_fkey (
+          id,
+          full_name,
+          email
+        )
+      `)
+      .or(`sender_id.eq.${userId},receiver_id.eq.${userId}`)
+      .eq("status", "accepted");
+
+    if (error) {
+      setMessage(error.message);
+      return;
+    }
+
+    const normalizedMembers = (data || []).map((request) => {
+      const isSender = request.sender_id === userId;
+      return isSender ? request.receiver : request.sender;
+    });
+
+    setAvailableMembers(normalizedMembers);
+  };
+
   const handleChange = (e) => {
     setFormData((prev) => ({
       ...prev,
@@ -73,6 +111,14 @@ function ProjectsPage() {
       ...prev,
       color,
     }));
+  };
+
+  const handleMemberToggle = (memberId) => {
+    setSelectedMemberIds((prev) =>
+      prev.includes(memberId)
+        ? prev.filter((id) => id !== memberId)
+        : [...prev, memberId]
+    );
   };
 
   const handleCreateProject = async (e) => {
@@ -88,20 +134,42 @@ function ProjectsPage() {
 
     const { name, description, due_date, color } = formData;
 
-    const { error } = await supabase.from("projects").insert([
-      {
-        name,
-        description,
-        due_date: due_date || null,
-        color,
-        owner_id: user.id,
-      },
-    ]);
+    const { data: insertedProject, error } = await supabase
+      .from("projects")
+      .insert([
+        {
+          name,
+          description,
+          due_date: due_date || null,
+          color,
+          owner_id: user.id,
+        },
+      ])
+      .select()
+      .single();
 
     if (error) {
       setMessage(error.message);
       setLoading(false);
       return;
+    }
+
+    if (selectedMemberIds.length > 0) {
+      const projectMemberRows = selectedMemberIds.map((memberId) => ({
+        project_id: insertedProject.id,
+        user_id: memberId,
+        role: "member",
+      }));
+
+      const { error: memberError } = await supabase
+        .from("project_members")
+        .insert(projectMemberRows);
+
+      if (memberError) {
+        setMessage(memberError.message);
+        setLoading(false);
+        return;
+      }
     }
 
     setFormData({
@@ -110,6 +178,7 @@ function ProjectsPage() {
       due_date: "",
       color: "purple",
     });
+    setSelectedMemberIds([]);
 
     setMessage("Project created successfully.");
     await fetchProjects(user.id);
@@ -173,6 +242,32 @@ function ProjectsPage() {
                       />
                     ))}
                   </div>
+                </div>
+
+                <div className="member-select-group">
+                  <p className="color-picker-label">Select Members</p>
+
+                  {availableMembers.length === 0 ? (
+                    <p className="muted">
+                      No accepted members yet. Send and accept member requests first.
+                    </p>
+                  ) : (
+                    <div className="member-checkbox-list">
+                      {availableMembers.map((member) => (
+                        <label key={member.id} className="member-checkbox-item">
+                          <input
+                            type="checkbox"
+                            checked={selectedMemberIds.includes(member.id)}
+                            onChange={() => handleMemberToggle(member.id)}
+                          />
+                          <span>
+                            {member.full_name || member.email}{" "}
+                            <span className="muted">({member.email})</span>
+                          </span>
+                        </label>
+                      ))}
+                    </div>
+                  )}
                 </div>
 
                 <button type="submit" disabled={loading} className="btn">

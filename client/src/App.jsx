@@ -9,6 +9,7 @@ import TaskDetailsPage from "./pages/TaskDetailsPage";
 import CalendarPage from "./pages/CalendarPage";
 import SettingsPage from "./pages/SettingsPage";
 import ProfilePage from "./pages/ProfilePage";
+import MembersPage from "./pages/MembersPage";
 
 function App() {
   return (
@@ -20,6 +21,7 @@ function App() {
         <Route path="/dashboard" element={<DashboardPage />} />
         <Route path="/projects" element={<ProjectsPage />} />
         <Route path="/projects/:projectId" element={<ProjectDetailsPage />} />
+        <Route path="/members" element={<MembersPage />} />
         <Route path="/tasks" element={<AllTasksPage />} />
         <Route path="/tasks/:taskId" element={<TaskDetailsPage />} />
         <Route path="/calendar" element={<CalendarPage />} />
