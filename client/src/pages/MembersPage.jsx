@@ -3,17 +3,33 @@ import { useNavigate } from "react-router-dom";
 import { supabase } from "../lib/supabaseClient";
 import AppLayout from "../components/AppLayout";
 
+const MEMBER_TABS = [
+  { id: "accepted", label: "My Members" },
+  { id: "find", label: "Find Members" },
+  { id: "requests", label: "Requests" },
+];
+
+function getInitials(name = "", email = "") {
+  const source = name?.trim() || email?.trim() || "?";
+  const parts = source.split(" ").filter(Boolean);
+
+  if (parts.length >= 2) {
+    return `${parts[0][0]}${parts[1][0]}`.toUpperCase();
+  }
+
+  return source.slice(0, 2).toUpperCase();
+}
+
 function MembersPage() {
   const navigate = useNavigate();
 
   const [user, setUser] = useState(null);
   const [requests, setRequests] = useState([]);
-  const [formData, setFormData] = useState({
-    email: "",
-  });
+  const [formData, setFormData] = useState({ email: "" });
   const [searchTerm, setSearchTerm] = useState("");
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
+  const [activeTab, setActiveTab] = useState("accepted");
 
   useEffect(() => {
     checkUserAndLoadData();
@@ -219,180 +235,263 @@ function MembersPage() {
     });
   }, [acceptedConnections, searchTerm]);
 
+  const totalRequests = incomingRequests.length + outgoingRequests.length;
+
   return (
     <AppLayout>
       <div className="app-page">
-        <div className="app-shell">
+        <div className="app-shell members-shell">
           <div className="top-bar">
             <div>
               <h1 className="page-title">Members</h1>
               <p className="page-subtitle">
-                Send requests, manage invitations, and view accepted members.
+                Connect with teammates, manage requests, and view your accepted members.
               </p>
             </div>
           </div>
 
-          <div className="two-col-grid">
-            <div className="card section-card">
-              <h2>Send Member Request</h2>
-
-              <form onSubmit={handleSendRequest} className="form">
-                <input
-                  type="email"
-                  name="email"
-                  placeholder="Member Email"
-                  value={formData.email}
-                  onChange={handleChange}
-                  required
-                  className="input"
-                />
-
-                <button type="submit" disabled={loading} className="btn">
-                  {loading ? "Sending..." : "Send Request"}
+          <div className="members-tabs-wrap">
+            <div className="members-tabs">
+              {MEMBER_TABS.map((tab) => (
+                <button
+                  key={tab.id}
+                  type="button"
+                  className={`members-tab ${activeTab === tab.id ? "active" : ""}`}
+                  onClick={() => setActiveTab(tab.id)}
+                >
+                  {tab.label}
+                  {tab.id === "accepted" && (
+                    <span className="members-tab-count">{acceptedConnections.length}</span>
+                  )}
+                  {tab.id === "requests" && totalRequests > 0 && (
+                    <span className="members-tab-count">{totalRequests}</span>
+                  )}
                 </button>
-              </form>
-
-              {message && <p className="message">{message}</p>}
+              ))}
             </div>
+          </div>
 
-            <div className="card section-card">
-              <h2>Search Accepted Members</h2>
+          {message && <p className="message">{message}</p>}
 
-              <input
-                type="text"
-                placeholder="Search by name or email"
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="input"
-              />
-
-              <div className="member-summary-grid">
-                <div className="member-summary-card">
-                  <p className="member-summary-label">Accepted</p>
-                  <h3>{acceptedConnections.length}</h3>
+          {activeTab === "accepted" && (
+            <div className="members-tab-panel">
+              <div className="card section-card members-hero-card">
+                <div className="members-hero-top">
+                  <div>
+                    <h2 className="members-section-title">
+                      My Members ({filteredAcceptedConnections.length})
+                    </h2>
+                    <p className="muted members-section-subtitle">
+                      Search and manage your accepted connections.
+                    </p>
+                  </div>
                 </div>
-                <div className="member-summary-card">
-                  <p className="member-summary-label">Incoming</p>
-                  <h3>{incomingRequests.length}</h3>
+
+                <div className="members-search-row">
+                  <input
+                    type="text"
+                    placeholder="Search members..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="input members-search-input"
+                  />
                 </div>
-                <div className="member-summary-card">
-                  <p className="member-summary-label">Outgoing</p>
-                  <h3>{outgoingRequests.length}</h3>
+
+                {filteredAcceptedConnections.length === 0 ? (
+                  <div className="members-empty-state">
+                    <h3>No members yet</h3>
+                    <p className="muted">
+                      Accepted connections will appear here once requests are approved.
+                    </p>
+                  </div>
+                ) : (
+                  <div className="members-card-list">
+                    {filteredAcceptedConnections.map((connection) => {
+                      const person = connection.otherUser;
+                      return (
+                        <div key={connection.id} className="members-person-card">
+                          <div className="members-person-main">
+                            <div className="members-avatar">
+                              {getInitials(person?.full_name, person?.email)}
+                            </div>
+
+                            <div className="members-person-info">
+                              <h3>{person?.full_name || "No name"}</h3>
+                              <p>{person?.email}</p>
+                              <span className="members-presence offline">Connected</span>
+                            </div>
+                          </div>
+
+                          <div className="members-person-actions">
+                            <button
+                              type="button"
+                              className="btn btn-danger"
+                              onClick={() => handleDeleteRequest(connection.id)}
+                            >
+                              Remove Connection
+                            </button>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
+          {activeTab === "find" && (
+            <div className="members-tab-panel">
+              <div className="members-find-layout">
+                <div className="card section-card members-find-card">
+                  <div className="members-find-icon">✉</div>
+
+                  <div className="members-find-content">
+                    <h2 className="members-section-title">Search by Email</h2>
+                    <p className="muted members-section-subtitle">
+                      Find and send a member request using their registered email address.
+                    </p>
+
+                    <form onSubmit={handleSendRequest} className="form members-inline-form">
+                      <input
+                        type="email"
+                        name="email"
+                        placeholder="Enter member email"
+                        value={formData.email}
+                        onChange={handleChange}
+                        required
+                        className="input"
+                      />
+
+                      <button type="submit" disabled={loading} className="btn">
+                        {loading ? "Sending..." : "Send Request"}
+                      </button>
+                    </form>
+                  </div>
+                </div>
+
+                <div className="card section-card members-stats-card">
+                  <h2 className="members-section-title">Connection Summary</h2>
+
+                  <div className="member-summary-grid members-summary-grid-large">
+                    <div className="member-summary-card">
+                      <p className="member-summary-label">Accepted</p>
+                      <h3>{acceptedConnections.length}</h3>
+                    </div>
+                    <div className="member-summary-card">
+                      <p className="member-summary-label">Incoming</p>
+                      <h3>{incomingRequests.length}</h3>
+                    </div>
+                    <div className="member-summary-card">
+                      <p className="member-summary-label">Outgoing</p>
+                      <h3>{outgoingRequests.length}</h3>
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
-          </div>
+          )}
 
-          <div className="three-col-grid">
-            <div className="card section-card">
-              <h2>Incoming Requests</h2>
+          {activeTab === "requests" && (
+            <div className="members-tab-panel">
+              <div className="members-requests-grid">
+                <div className="card section-card">
+                  <h2 className="members-section-title">Incoming Requests</h2>
+                  <p className="muted members-section-subtitle">
+                    Requests sent to you waiting for action.
+                  </p>
 
-              {incomingRequests.length === 0 ? (
-                <p className="muted">No incoming requests.</p>
-              ) : (
-                <div className="member-list">
-                  {incomingRequests.map((request) => (
-                    <div key={request.id} className="member-item">
-                      <p>
-                        <strong>Name:</strong> {request.sender?.full_name || "No name"}
-                      </p>
-                      <p>
-                        <strong>Email:</strong> {request.sender?.email}
-                      </p>
-                      <p>
-                        <strong>Status:</strong> {request.status}
-                      </p>
-
-                      <div className="member-actions">
-                        <button
-                          type="button"
-                          className="btn"
-                          onClick={() => handleUpdateRequest(request.id, "accepted")}
-                        >
-                          Accept
-                        </button>
-                        <button
-                          type="button"
-                          className="btn btn-secondary"
-                          onClick={() => handleUpdateRequest(request.id, "rejected")}
-                        >
-                          Reject
-                        </button>
-                      </div>
+                  {incomingRequests.length === 0 ? (
+                    <div className="members-empty-state compact">
+                      <h3>No incoming requests</h3>
+                      <p className="muted">You're all caught up.</p>
                     </div>
-                  ))}
-                </div>
-              )}
-            </div>
+                  ) : (
+                    <div className="members-request-list">
+                      {incomingRequests.map((request) => (
+                        <div key={request.id} className="members-request-card">
+                          <div className="members-request-user">
+                            <div className="members-avatar">
+                              {getInitials(
+                                request.sender?.full_name,
+                                request.sender?.email
+                              )}
+                            </div>
 
-            <div className="card section-card">
-              <h2>Accepted Members</h2>
+                            <div className="members-request-info">
+                              <h3>{request.sender?.full_name || "No name"}</h3>
+                              <p>{request.sender?.email}</p>
+                            </div>
+                          </div>
 
-              {filteredAcceptedConnections.length === 0 ? (
-                <p className="muted">No accepted members yet.</p>
-              ) : (
-                <div className="member-list">
-                  {filteredAcceptedConnections.map((connection) => (
-                    <div key={connection.id} className="member-item">
-                      <p>
-                        <strong>Name:</strong> {connection.otherUser?.full_name || "No name"}
-                      </p>
-                      <p>
-                        <strong>Email:</strong> {connection.otherUser?.email}
-                      </p>
-                      <p>
-                        <strong>Status:</strong> accepted
-                      </p>
-
-                      <div className="member-actions">
-                        <button
-                          type="button"
-                          className="btn btn-danger"
-                          onClick={() => handleDeleteRequest(connection.id)}
-                        >
-                          Remove Connection
-                        </button>
-                      </div>
+                          <div className="member-actions">
+                            <button
+                              type="button"
+                              className="btn"
+                              onClick={() => handleUpdateRequest(request.id, "accepted")}
+                            >
+                              Accept
+                            </button>
+                            <button
+                              type="button"
+                              className="btn btn-secondary"
+                              onClick={() => handleUpdateRequest(request.id, "rejected")}
+                            >
+                              Reject
+                            </button>
+                          </div>
+                        </div>
+                      ))}
                     </div>
-                  ))}
+                  )}
                 </div>
-              )}
-            </div>
 
-            <div className="card section-card">
-              <h2>Outgoing Requests</h2>
+                <div className="card section-card">
+                  <h2 className="members-section-title">Outgoing Requests</h2>
+                  <p className="muted members-section-subtitle">
+                    Requests you have already sent.
+                  </p>
 
-              {outgoingRequests.length === 0 ? (
-                <p className="muted">No outgoing requests.</p>
-              ) : (
-                <div className="member-list">
-                  {outgoingRequests.map((request) => (
-                    <div key={request.id} className="member-item">
-                      <p>
-                        <strong>Name:</strong> {request.receiver?.full_name || "No name"}
-                      </p>
-                      <p>
-                        <strong>Email:</strong> {request.receiver?.email}
-                      </p>
-                      <p>
-                        <strong>Status:</strong> {request.status}
-                      </p>
-
-                      <div className="member-actions">
-                        <button
-                          type="button"
-                          className="btn btn-danger"
-                          onClick={() => handleDeleteRequest(request.id)}
-                        >
-                          Cancel Request
-                        </button>
-                      </div>
+                  {outgoingRequests.length === 0 ? (
+                    <div className="members-empty-state compact">
+                      <h3>No outgoing requests</h3>
+                      <p className="muted">Pending requests will appear here.</p>
                     </div>
-                  ))}
+                  ) : (
+                    <div className="members-request-list">
+                      {outgoingRequests.map((request) => (
+                        <div key={request.id} className="members-request-card">
+                          <div className="members-request-user">
+                            <div className="members-avatar">
+                              {getInitials(
+                                request.receiver?.full_name,
+                                request.receiver?.email
+                              )}
+                            </div>
+
+                            <div className="members-request-info">
+                              <h3>{request.receiver?.full_name || "No name"}</h3>
+                              <p>{request.receiver?.email}</p>
+                            </div>
+                          </div>
+
+                          <div className="member-actions">
+                            <button
+                              type="button"
+                              className="btn btn-danger"
+                              onClick={() => handleDeleteRequest(request.id)}
+                            >
+                              Cancel Request
+                            </button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
-              )}
+              </div>
             </div>
-          </div>
+          )}
         </div>
       </div>
     </AppLayout>
