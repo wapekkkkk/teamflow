@@ -29,32 +29,33 @@ function AllTasksPage() {
       return;
     }
 
-    await Promise.all([fetchTasks(), fetchMembers()]);
+    await Promise.all([fetchTasks(user.id), fetchMembers()]);
     setLoading(false);
   };
 
-  const fetchTasks = async () => {
-    const { data, error } = await supabase
-      .from("tasks")
-      .select(
-        `
-        *,
-        projects (
-          id,
-          name,
-          color
-        )
+  const fetchTasks = async (currentUserId) => {
+  const { data, error } = await supabase
+    .from("tasks")
+    .select(
       `
+      *,
+      projects (
+        id,
+        name,
+        color
       )
-      .order("created_at", { ascending: false });
+    `
+    )
+    .or(`assigned_to.eq.${currentUserId},assigned_to.is.null`)
+    .order("created_at", { ascending: false });
 
-    if (error) {
-      setMessage(error.message);
-      return;
-    }
+  if (error) {
+    setMessage(error.message);
+    return;
+  }
 
-    setTasks(data || []);
-  };
+  setTasks(data || []);
+};
 
   const fetchMembers = async () => {
     const { data, error } = await supabase
