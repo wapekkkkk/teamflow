@@ -352,6 +352,9 @@ function ProjectDetailsPage() {
   const getProjectColor = () => {
     return project?.color || "purple";
   };
+  const handleEditProjectPage = () => {
+  navigate(`/projects/${projectId}/edit`);
+};
 
   const taskCount = tasks.length;
   const doneCount = tasks.filter((task) => task.status === "Done").length;
@@ -375,6 +378,13 @@ function ProjectDetailsPage() {
             </div>
 
             <div className="top-bar-actions">
+              <button
+                onClick={handleEditProjectPage}
+                className="btn btn-secondary"
+              >
+                Edit Project
+              </button>
+
               <button onClick={handleCreateTaskPage} className="btn">
                 New Task
               </button>

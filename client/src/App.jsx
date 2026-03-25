@@ -12,6 +12,7 @@ import CalendarPage from "./pages/CalendarPage";
 import SettingsPage from "./pages/SettingsPage";
 import ProfilePage from "./pages/ProfilePage";
 import MembersPage from "./pages/MembersPage";
+import EditProjectPage from "./pages/EditProjectPage";
 
 function App() {
   return (
@@ -23,6 +24,7 @@ function App() {
         <Route path="/dashboard" element={<DashboardPage />} />
         <Route path="/projects" element={<ProjectsPage />} />
         <Route path="/projects/new" element={<CreateProjectPage />} />
+        <Route path="/projects/:projectId/edit" element={<EditProjectPage />} />
         <Route path="/projects/:projectId" element={<ProjectDetailsPage />} />
         <Route
           path="/projects/:projectId/tasks/new"
@@ -34,6 +36,7 @@ function App() {
         <Route path="/calendar" element={<CalendarPage />} />
         <Route path="/settings" element={<SettingsPage />} />
         <Route path="/profile" element={<ProfilePage />} />
+         
       </Routes>
     </BrowserRouter>
   );
