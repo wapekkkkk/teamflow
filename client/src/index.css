@@ -1235,6 +1235,7 @@ button {
 }
 
 @media (max-width: 1200px) {
+
   .calendar-layout,
   .dashboard-mini-board {
     grid-template-columns: 1fr;
@@ -1242,6 +1243,7 @@ button {
 }
 
 @media (max-width: 1100px) {
+
   .app-layout,
   .app-layout.has-right-sidebar {
     grid-template-columns: 1fr;
@@ -1284,6 +1286,7 @@ button {
 }
 
 @media (max-width: 800px) {
+
   .calendar-grid,
   .calendar-weekdays {
     gap: 8px;
@@ -1305,6 +1308,7 @@ button {
 }
 
 @media (max-width: 700px) {
+
   .dashboard-search,
   .all-tasks-search-wrap {
     max-width: 100%;
@@ -1348,6 +1352,7 @@ button {
     font-size: 1.5rem;
   }
 }
+
 /* ===== Compact mode override ===== */
 
 .app-layout {
@@ -1707,6 +1712,7 @@ button {
     grid-template-columns: 1fr;
   }
 }
+
 .project-task-mine {
   border-left: 5px solid #22c55e;
   box-shadow: inset 0 0 0 1px rgba(34, 197, 94, 0.15);
@@ -1743,6 +1749,7 @@ button {
   color: #fca5a5;
   border: 1px solid rgba(239, 68, 68, 0.25);
 }
+
 .app-shell-narrow {
   max-width: 980px;
 }
@@ -1778,6 +1785,7 @@ button {
 .empty-state .btn {
   margin-top: 14px;
 }
+
 .project-overview-card {
   border-radius: 22px;
   padding: 18px 18px 16px;
@@ -1857,17 +1865,20 @@ button {
   color: rgba(255, 255, 255, 0.78);
   font-size: 0.8rem;
 }
+
 .projects-page-list-wrap {
   display: flex;
   flex-direction: column;
   gap: 18px;
 }
+
 .project-list {
   display: flex;
   flex-direction: column;
   gap: 18px;
   margin-top: 0;
 }
+
 .project-details-summary-card {
   border-radius: 20px;
   padding: 16px 18px 14px;
@@ -1978,6 +1989,7 @@ button {
 .create-task-card {
   max-width: 100%;
 }
+
 .notes-panel-wrap {
   height: 100%;
   display: flex;
@@ -2098,6 +2110,7 @@ button {
   background: rgba(239, 68, 68, 0.12);
   color: #fca5a5;
 }
+
 .app-layout.has-right-sidebar {
   grid-template-columns: 220px minmax(0, 1fr) 285px;
 }
@@ -2159,6 +2172,7 @@ button {
   gap: 16px;
   width: 100%;
 }
+
 .notes-panel-wrap.collapsed {
   justify-content: center;
   align-items: flex-start;
@@ -2180,6 +2194,7 @@ button {
   letter-spacing: 0.08em;
   user-select: none;
 }
+
 .notes-panel {
   display: flex;
   flex-direction: column;
@@ -2233,4 +2248,220 @@ button {
 
 .notes-collapse-btn:hover {
   background: rgba(255, 255, 255, 0.08);
+}
+
+.calendar-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1.65fr) minmax(280px, 0.72fr);
+  gap: 16px;
+  align-items: start;
+}
+
+.calendar-layout-narrow-side {
+  grid-template-columns: minmax(0, 1.7fr) minmax(300px, 0.68fr);
+}
+
+.calendar-side-panel {
+  min-width: 0;
+}
+
+.calendar-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.calendar-month-title {
+  margin: 0;
+  font-size: 1.25rem;
+  text-align: center;
+}
+
+.calendar-weekdays,
+.calendar-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 8px;
+}
+
+.calendar-cell {
+  min-height: 105px;
+  background: rgba(39, 52, 73, 0.72);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 9px;
+  text-align: left;
+  color: var(--text-main);
+  cursor: pointer;
+  transition: 0.18s ease;
+  display: flex;
+  flex-direction: column;
+}
+
+.calendar-cell:hover {
+  border-color: var(--primary);
+  transform: translateY(-1px);
+}
+
+.calendar-cell-empty {
+  background: transparent;
+  border: 1px dashed rgba(255, 255, 255, 0.05);
+  cursor: default;
+}
+
+.calendar-cell-today {
+  box-shadow: 0 0 0 1px rgba(59, 130, 246, 0.4);
+}
+
+.calendar-cell-selected {
+  background: rgba(59, 130, 246, 0.12);
+  border-color: var(--primary);
+}
+
+.calendar-day-number {
+  font-size: 0.92rem;
+  font-weight: 700;
+  margin-bottom: 10px;
+}
+
+.calendar-cell-dots {
+  margin-top: auto;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+  min-height: 18px;
+}
+
+.calendar-task-dot {
+  width: 9px;
+  height: 9px;
+  border-radius: 999px;
+  display: inline-block;
+  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.04);
+}
+
+.calendar-more-dots {
+  font-size: 0.74rem;
+  color: var(--text-soft);
+  font-weight: 600;
+}
+
+.calendar-side-title {
+  margin-top: 0;
+  margin-bottom: 16px;
+}
+
+.calendar-selected-task-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.calendar-task-card {
+  cursor: pointer;
+}
+
+.calendar-task-card .project-task-content {
+  padding: 14px 16px;
+}
+
+.calendar-task-card .project-task-main h3 {
+  margin: 0;
+  font-size: 1rem;
+  line-height: 1.35;
+}
+
+.calendar-task-card .project-task-badges {
+  margin-top: 12px;
+  gap: 8px;
+}
+
+.task-project-badge-button {
+  cursor: pointer;
+  transition: 0.18s ease;
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--text-main);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.task-project-badge-button:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.calendar-task-dot.task-theme-purple {
+  background: #8b5cf6;
+}
+
+.calendar-task-dot.task-theme-blue {
+  background: #3b82f6;
+}
+
+.calendar-task-dot.task-theme-red {
+  background: #ef4444;
+}
+
+.calendar-task-dot.task-theme-green {
+  background: #22c55e;
+}
+
+.calendar-task-dot.task-theme-orange {
+  background: #f97316;
+}
+
+.calendar-task-dot.task-theme-pink {
+  background: #ec4899;
+}
+
+.calendar-task-dot.task-theme-teal {
+  background: #14b8a6;
+}
+
+.calendar-task-dot.task-theme-yellow {
+  background: #eab308;
+}
+
+@media (max-width: 1200px) {
+
+  .calendar-layout,
+  .calendar-layout-narrow-side {
+    grid-template-columns: 1fr;
+  }
+}
+
+.calendar-cell-dots {
+  margin-top: auto;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 22px;
+}
+
+.calendar-dot-stack {
+  display: flex;
+  align-items: center;
+  padding-left: 2px;
+}
+
+.calendar-task-dot {
+  width: 11px;
+  height: 11px;
+  border-radius: 999px;
+  display: inline-block;
+  border: 2px solid rgba(24, 36, 58, 0.95);
+  margin-left: -4px;
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.04);
+}
+
+.calendar-task-dot:first-child {
+  margin-left: 0;
+}
+
+.calendar-more-dots {
+  font-size: 0.76rem;
+  color: var(--text-soft);
+  font-weight: 700;
+  line-height: 1;
 }

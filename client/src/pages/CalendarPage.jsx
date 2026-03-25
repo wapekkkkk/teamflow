@@ -64,6 +64,7 @@ function CalendarPage() {
       `)
       .in("project_id", projectIds)
       .not("due_date", "is", null)
+      .neq("status", "Done")
       .order("due_date", { ascending: true });
 
     if (error) {
@@ -123,6 +124,17 @@ function CalendarPage() {
     return `${year}-${month}-${day}`;
   };
 
+  const formatDueDate = (dateString) => {
+    if (!dateString) return "No due date";
+
+    const date = new Date(dateString);
+    return date.toLocaleDateString("en-MY", {
+      day: "numeric",
+      month: "short",
+      year: "numeric",
+    });
+  };
+
   const todayKey = formatDateKey(new Date());
   const selectedDateKey = formatDateKey(selectedDate);
 
@@ -156,20 +168,20 @@ function CalendarPage() {
     );
   };
 
-  const getTaskChipClass = (task) => {
-    return `calendar-task-chip task-theme-${task.projects?.color || "purple"}`;
+  const getTaskThemeClass = (task) => {
+    return `task-theme-${task.projects?.color || "purple"}`;
   };
 
   return (
-    <AppLayout rightSidebar={<DashboardNotesSidebar title="Quick Notes" />}
-    defaultRightSidebarCollapsed={true}
+    <AppLayout
+      rightSidebar={<DashboardNotesSidebar title="Quick Notes" />}
+      defaultRightSidebarCollapsed={true}
     >
       <div className="app-page">
         <div className="app-shell">
           <div className="top-bar">
             <div>
               <h1 className="page-title">Calendar</h1>
-            
             </div>
           </div>
 
@@ -180,7 +192,7 @@ function CalendarPage() {
               <p className="muted">Loading calendar...</p>
             </div>
           ) : (
-            <div className="calendar-layout">
+            <div className="calendar-layout calendar-layout-narrow-side">
               <div className="card section-card">
                 <div className="calendar-header">
                   <button
@@ -232,31 +244,26 @@ function CalendarPage() {
                       <button
                         key={dateKey}
                         type="button"
-                        className={`calendar-cell ${
-                          isToday ? "calendar-cell-today" : ""
-                        } ${isSelected ? "calendar-cell-selected" : ""}`}
+                        className={`calendar-cell ${isToday ? "calendar-cell-today" : ""
+                          } ${isSelected ? "calendar-cell-selected" : ""}`}
                         onClick={() => setSelectedDate(date)}
                       >
                         <div className="calendar-day-number">{date.getDate()}</div>
 
-                        <div className="calendar-cell-tasks">
-                          {dayTasks.slice(0, 3).map((task) => (
-                            <div
-                              key={task.id}
-                              className={getTaskChipClass(task)}
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                navigate(`/tasks/${task.id}`);
-                              }}
-                            >
-                              {task.title}
-                            </div>
-                          ))}
+                        <div className="calendar-cell-dots">
+                          <div className="calendar-dot-stack">
+                            {dayTasks.slice(0, 4).map((task, index) => (
+                              <span
+                                key={task.id}
+                                className={`calendar-task-dot ${getTaskThemeClass(task)}`}
+                                title={`${task.title} • ${task.projects?.name || "Unknown Project"}`}
+                                style={{ zIndex: 10 - index }}
+                              ></span>
+                            ))}
+                          </div>
 
-                          {dayTasks.length > 3 && (
-                            <div className="calendar-more-tasks">
-                              +{dayTasks.length - 3} more
-                            </div>
+                          {dayTasks.length > 4 && (
+                            <span className="calendar-more-dots">+{dayTasks.length - 4}</span>
                           )}
                         </div>
                       </button>
@@ -265,7 +272,7 @@ function CalendarPage() {
                 </div>
               </div>
 
-              <div className="card section-card">
+              <div className="card section-card calendar-side-panel">
                 <h2 className="calendar-side-title">
                   Tasks on {selectedDate.toLocaleDateString()}
                 </h2>
@@ -277,55 +284,41 @@ function CalendarPage() {
                     {selectedDateTasks.map((task) => (
                       <div
                         key={task.id}
-                        className={`project-task-card task-theme-${task.projects?.color || "purple"}`}
+                        className={`project-task-card calendar-task-card ${getTaskThemeClass(task)}`}
+                        onClick={() => navigate(`/tasks/${task.id}`)}
+                        role="button"
+                        tabIndex={0}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter" || e.key === " ") {
+                            navigate(`/tasks/${task.id}`);
+                          }
+                        }}
                       >
                         <div className="task-color-bar"></div>
 
                         <div className="project-task-content">
                           <div className="project-task-header">
-                            <div
-                              className="project-task-main"
-                              onClick={() => navigate(`/tasks/${task.id}`)}
-                              role="button"
-                              tabIndex={0}
-                              onKeyDown={(e) => {
-                                if (e.key === "Enter" || e.key === " ") {
-                                  navigate(`/tasks/${task.id}`);
-                                }
-                              }}
-                            >
+                            <div className="project-task-main">
                               <h3>{task.title}</h3>
-                              <p className="project-task-description muted">
-                                {task.description || "No description"}
-                              </p>
                             </div>
                           </div>
 
                           <div className="project-task-badges">
                             <span className="task-status-badge">{task.status}</span>
+
                             <span className="task-date-badge">
-                              Due: {task.due_date}
+                              Due: {formatDueDate(task.due_date)}
                             </span>
-                            <span className="task-project-badge">
+
+                            <button
+                              type="button"
+                              className="task-project-badge task-project-badge-button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                navigate(`/projects/${task.project_id}`);
+                              }}
+                            >
                               Project: {task.projects?.name || "Unknown Project"}
-                            </span>
-                          </div>
-
-                          <div className="project-task-actions project-task-actions-row">
-                            <button
-                              type="button"
-                              className="project-status-btn active"
-                              onClick={() => navigate(`/projects/${task.project_id}`)}
-                            >
-                              View Project
-                            </button>
-
-                            <button
-                              type="button"
-                              className="project-status-btn"
-                              onClick={() => navigate(`/tasks/${task.id}`)}
-                            >
-                              Open Task
                             </button>
                           </div>
                         </div>

@@ -36,14 +36,7 @@ function Sidebar() {
             Projects
           </NavLink>
 
-          <NavLink
-            to="/members"
-            className={({ isActive }) =>
-              isActive ? "sidebar-link active" : "sidebar-link"
-            }
-          >
-            Members
-          </NavLink>
+
 
           <NavLink
             to="/tasks"
@@ -62,7 +55,14 @@ function Sidebar() {
           >
             Calendar
           </NavLink>
-
+          <NavLink
+            to="/members"
+            className={({ isActive }) =>
+              isActive ? "sidebar-link active" : "sidebar-link"
+            }
+          >
+            Members
+          </NavLink>
           <NavLink
             to="/settings"
             className={({ isActive }) =>
