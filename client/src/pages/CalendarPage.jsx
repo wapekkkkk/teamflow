@@ -1,8 +1,46 @@
 import { useEffect, useMemo, useState } from "react";
+import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "../lib/supabaseClient";
 import AppLayout from "../components/AppLayout";
 import DashboardNotesSidebar from "../components/DashboardNotesSidebar";
+
+const fadeDown = {
+  hidden: { opacity: 0, y: -14 },
+  show: {
+    opacity: 1,
+    y: 0,
+    transition: { duration: 0.3, ease: "easeOut" },
+  },
+};
+
+const fadeUp = {
+  hidden: { opacity: 0, y: 16 },
+  show: {
+    opacity: 1,
+    y: 0,
+    transition: { duration: 0.32, ease: "easeOut" },
+  },
+};
+
+const fadeRight = {
+  hidden: { opacity: 0, x: 24 },
+  show: {
+    opacity: 1,
+    x: 0,
+    transition: { duration: 0.32, ease: "easeOut" },
+  },
+};
+
+const staggerList = {
+  hidden: {},
+  show: {
+    transition: {
+      staggerChildren: 0.06,
+      delayChildren: 0.05,
+    },
+  },
+};
 
 function CalendarPage() {
   const navigate = useNavigate();
@@ -179,21 +217,36 @@ function CalendarPage() {
     >
       <div className="app-page">
         <div className="app-shell">
-          <div className="top-bar">
+          <motion.div
+            className="top-bar"
+            variants={fadeDown}
+            initial="hidden"
+            animate="show"
+          >
             <div>
               <h1 className="page-title">Calendar</h1>
             </div>
-          </div>
+          </motion.div>
 
           {message && <p className="message">{message}</p>}
 
           {loading ? (
-            <div className="card section-card">
+            <motion.div
+              className="card section-card"
+              variants={fadeUp}
+              initial="hidden"
+              animate="show"
+            >
               <p className="muted">Loading calendar...</p>
-            </div>
+            </motion.div>
           ) : (
             <div className="calendar-layout calendar-layout-narrow-side">
-              <div className="card section-card">
+              <motion.div
+                className="card section-card"
+                variants={fadeUp}
+                initial="hidden"
+                animate="show"
+              >
                 <div className="calendar-header">
                   <button
                     type="button"
@@ -244,11 +297,14 @@ function CalendarPage() {
                       <button
                         key={dateKey}
                         type="button"
-                        className={`calendar-cell ${isToday ? "calendar-cell-today" : ""
-                          } ${isSelected ? "calendar-cell-selected" : ""}`}
+                        className={`calendar-cell ${
+                          isToday ? "calendar-cell-today" : ""
+                        } ${isSelected ? "calendar-cell-selected" : ""}`}
                         onClick={() => setSelectedDate(date)}
                       >
-                        <div className="calendar-day-number">{date.getDate()}</div>
+                        <div className="calendar-day-number">
+                          {date.getDate()}
+                        </div>
 
                         <div className="calendar-cell-dots">
                           <div className="calendar-dot-stack">
@@ -256,23 +312,32 @@ function CalendarPage() {
                               <span
                                 key={task.id}
                                 className={`calendar-task-dot ${getTaskThemeClass(task)}`}
-                                title={`${task.title} • ${task.projects?.name || "Unknown Project"}`}
+                                title={`${task.title} • ${
+                                  task.projects?.name || "Unknown Project"
+                                }`}
                                 style={{ zIndex: 10 - index }}
                               ></span>
                             ))}
                           </div>
 
                           {dayTasks.length > 4 && (
-                            <span className="calendar-more-dots">+{dayTasks.length - 4}</span>
+                            <span className="calendar-more-dots">
+                              +{dayTasks.length - 4}
+                            </span>
                           )}
                         </div>
                       </button>
                     );
                   })}
                 </div>
-              </div>
+              </motion.div>
 
-              <div className="card section-card calendar-side-panel">
+              <motion.div
+                className="card section-card calendar-side-panel"
+                variants={fadeRight}
+                initial="hidden"
+                animate="show"
+              >
                 <h2 className="calendar-side-title">
                   Tasks on {selectedDate.toLocaleDateString()}
                 </h2>
@@ -280,11 +345,18 @@ function CalendarPage() {
                 {selectedDateTasks.length === 0 ? (
                   <p className="muted">No tasks due on this date.</p>
                 ) : (
-                  <div className="calendar-selected-task-list">
+                  <motion.div
+                    className="calendar-selected-task-list"
+                    variants={staggerList}
+                    initial="hidden"
+                    animate="show"
+                  >
                     {selectedDateTasks.map((task) => (
-                      <div
+                      <motion.div
                         key={task.id}
-                        className={`project-task-card calendar-task-card ${getTaskThemeClass(task)}`}
+                        className={`project-task-card calendar-task-card ${getTaskThemeClass(
+                          task
+                        )}`}
                         onClick={() => navigate(`/tasks/${task.id}`)}
                         role="button"
                         tabIndex={0}
@@ -293,6 +365,8 @@ function CalendarPage() {
                             navigate(`/tasks/${task.id}`);
                           }
                         }}
+                        variants={fadeRight}
+                        whileHover={{ y: -3, scale: 1.01 }}
                       >
                         <div className="task-color-bar"></div>
 
@@ -304,7 +378,9 @@ function CalendarPage() {
                           </div>
 
                           <div className="project-task-badges">
-                            <span className="task-status-badge">{task.status}</span>
+                            <span className="task-status-badge">
+                              {task.status}
+                            </span>
 
                             <span className="task-date-badge">
                               Due: {formatDueDate(task.due_date)}
@@ -322,11 +398,11 @@ function CalendarPage() {
                             </button>
                           </div>
                         </div>
-                      </div>
+                      </motion.div>
                     ))}
-                  </div>
+                  </motion.div>
                 )}
-              </div>
+              </motion.div>
             </div>
           )}
         </div>

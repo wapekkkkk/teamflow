@@ -1,9 +1,57 @@
 import { useEffect, useMemo, useState } from "react";
+import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "../lib/supabaseClient";
 import AppLayout from "../components/AppLayout";
 
 const STATUS_TABS = ["All", "To Do", "In Progress", "Done"];
+
+const fadeDown = {
+  hidden: { opacity: 0, y: -14 },
+  show: {
+    opacity: 1,
+    y: 0,
+    transition: { duration: 0.3, ease: "easeOut" },
+  },
+};
+
+const fadeUp = {
+  hidden: { opacity: 0, y: 16 },
+  show: {
+    opacity: 1,
+    y: 0,
+    transition: { duration: 0.32, ease: "easeOut" },
+  },
+};
+
+const fadeRight = {
+  hidden: { opacity: 0, x: 24 },
+  show: {
+    opacity: 1,
+    x: 0,
+    transition: { duration: 0.32, ease: "easeOut" },
+  },
+};
+
+const staggerTabs = {
+  hidden: {},
+  show: {
+    transition: {
+      staggerChildren: 0.05,
+      delayChildren: 0.04,
+    },
+  },
+};
+
+const staggerList = {
+  hidden: {},
+  show: {
+    transition: {
+      staggerChildren: 0.06,
+      delayChildren: 0.05,
+    },
+  },
+};
 
 function AllTasksPage() {
   const navigate = useNavigate();
@@ -34,34 +82,31 @@ function AllTasksPage() {
   };
 
   const fetchTasks = async (currentUserId) => {
-  const { data, error } = await supabase
-    .from("tasks")
-    .select(
-      `
-      *,
-      projects (
-        id,
-        name,
-        color
-      )
-    `
-    )
-    .or(`assigned_to.eq.${currentUserId},assigned_to.is.null`)
-    .order("created_at", { ascending: false });
+    const { data, error } = await supabase
+      .from("tasks")
+      .select(`
+        *,
+        projects (
+          id,
+          name,
+          color
+        )
+      `)
+      .or(`assigned_to.eq.${currentUserId},assigned_to.is.null`)
+      .order("created_at", { ascending: false });
 
-  if (error) {
-    setMessage(error.message);
-    return;
-  }
+    if (error) {
+      setMessage(error.message);
+      return;
+    }
 
-  setTasks(data || []);
-};
+    setTasks(data || []);
+  };
 
   const fetchMembers = async () => {
     const { data, error } = await supabase
       .from("project_members")
-      .select(
-        `
+      .select(`
         id,
         project_id,
         role,
@@ -71,8 +116,7 @@ function AllTasksPage() {
           full_name,
           email
         )
-      `
-      );
+      `);
 
     if (error) {
       setMessage(error.message);
@@ -154,11 +198,11 @@ function AllTasksPage() {
         keyword === ""
           ? true
           : task.title?.toLowerCase().includes(keyword) ||
-          task.description?.toLowerCase().includes(keyword) ||
-          task.priority?.toLowerCase().includes(keyword) ||
-          task.status?.toLowerCase().includes(keyword) ||
-          task.projects?.name?.toLowerCase().includes(keyword) ||
-          getAssignedMemberLabel(task).toLowerCase().includes(keyword);
+            task.description?.toLowerCase().includes(keyword) ||
+            task.priority?.toLowerCase().includes(keyword) ||
+            task.status?.toLowerCase().includes(keyword) ||
+            task.projects?.name?.toLowerCase().includes(keyword) ||
+            getAssignedMemberLabel(task).toLowerCase().includes(keyword);
 
       return matchesStatus && matchesSearch;
     });
@@ -176,16 +220,27 @@ function AllTasksPage() {
     <AppLayout>
       <div className="app-page">
         <div className="app-shell">
-          <div className="top-bar">
+          <motion.div
+            className="top-bar"
+            variants={fadeDown}
+            initial="hidden"
+            animate="show"
+          >
             <div>
               <h1 className="page-title">All Tasks</h1>
               <p className="page-subtitle">
                 View all tasks across your projects in one place.
               </p>
             </div>
-          </div>
+          </motion.div>
 
-          <div className="card section-card" style={{ marginBottom: "20px" }}>
+          <motion.div
+            className="card section-card"
+            style={{ marginBottom: "20px" }}
+            variants={fadeUp}
+            initial="hidden"
+            animate="show"
+          >
             <div className="all-tasks-toolbar">
               <div className="all-tasks-search-wrap">
                 <input
@@ -197,48 +252,74 @@ function AllTasksPage() {
                 />
               </div>
 
-              <div className="all-tasks-tabs">
+              <motion.div
+                className="all-tasks-tabs"
+                variants={staggerTabs}
+                initial="hidden"
+                animate="show"
+              >
                 {STATUS_TABS.map((status) => (
-                  <button
+                  <motion.button
                     key={status}
                     type="button"
-                    className={`filter-tab ${activeStatus === status ? "active" : ""
-                      }`}
+                    className={`filter-tab ${
+                      activeStatus === status ? "active" : ""
+                    }`}
                     onClick={() => setActiveStatus(status)}
+                    variants={fadeRight}
+                    whileHover={{ y: -2 }}
+                    whileTap={{ scale: 0.98 }}
                   >
                     {status}
-                  </button>
+                  </motion.button>
                 ))}
-              </div>
+              </motion.div>
             </div>
-          </div>
+          </motion.div>
 
           {message && <p className="message">{message}</p>}
 
           {loading ? (
-            <div className="card section-card">
+            <motion.div
+              className="card section-card"
+              variants={fadeUp}
+              initial="hidden"
+              animate="show"
+            >
               <p className="muted">Loading tasks...</p>
-            </div>
+            </motion.div>
           ) : filteredTasks.length === 0 ? (
-            <div className="card section-card">
+            <motion.div
+              className="card section-card"
+              variants={fadeUp}
+              initial="hidden"
+              animate="show"
+            >
               <p className="muted">No tasks found.</p>
-            </div>
+            </motion.div>
           ) : (
-            <div className="task-list">
+            <motion.div
+              className="task-list"
+              variants={staggerList}
+              initial="hidden"
+              animate="show"
+            >
               {filteredTasks.map((task) => {
                 const projectColor = task.projects?.color || "purple";
                 const statusAction = getNextStatusAction(task.status);
 
                 return (
-                  <div
+                  <motion.div
                     key={task.id}
                     className={`all-tasks-card task-theme-${projectColor}`}
+                    variants={fadeRight}
+                    whileHover={{ y: -3, scale: 1.005 }}
                   >
                     <div className="task-color-bar"></div>
 
                     <div className="project-task-content">
                       <div className="project-task-header">
-                        <div
+                        <motion.div
                           className="project-task-main"
                           onClick={() => handleOpenTask(task.id)}
                           role="button"
@@ -248,20 +329,25 @@ function AllTasksPage() {
                               handleOpenTask(task.id);
                             }
                           }}
+                          whileHover={{ x: 3 }}
                         >
                           <h3>{task.title}</h3>
                           <p className="project-task-description muted">
                             {task.description || "No description"}
                           </p>
-                        </div>
+                        </motion.div>
                       </div>
 
                       <div className="all-tasks-meta-row">
                         <div className="project-task-badges">
-                          <span className="task-status-badge">{task.status}</span>
+                          <span className="task-status-badge">
+                            {task.status}
+                          </span>
 
                           <span
-                            className={`task-priority-badge ${getPriorityClass(task.priority)}`}
+                            className={`task-priority-badge ${getPriorityClass(
+                              task.priority
+                            )}`}
                           >
                             {task.priority} Priority
                           </span>
@@ -283,19 +369,23 @@ function AllTasksPage() {
                           </button>
                         </div>
 
-                        <button
+                        <motion.button
                           type="button"
                           className={statusAction.className}
-                          onClick={() => updateTaskStatus(task.id, statusAction.status)}
+                          onClick={() =>
+                            updateTaskStatus(task.id, statusAction.status)
+                          }
+                          whileHover={{ scale: 1.03 }}
+                          whileTap={{ scale: 0.97 }}
                         >
                           {statusAction.label}
-                        </button>
+                        </motion.button>
                       </div>
                     </div>
-                  </div>
+                  </motion.div>
                 );
               })}
-            </div>
+            </motion.div>
           )}
         </div>
       </div>

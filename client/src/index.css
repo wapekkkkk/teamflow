@@ -2783,3 +2783,11 @@ button {
     font-size: 1.08rem;
   }
 }
+.layout-content {
+  min-width: 0;
+}
+
+.app-layout,
+.layout-content {
+  height: 100%;
+}

@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "../lib/supabaseClient";
 import AppLayout from "../components/AppLayout";
@@ -8,6 +9,53 @@ const MEMBER_TABS = [
   { id: "find", label: "Find Members" },
   { id: "requests", label: "Requests" },
 ];
+
+const fadeDown = {
+  hidden: { opacity: 0, y: -14 },
+  show: {
+    opacity: 1,
+    y: 0,
+    transition: { duration: 0.3, ease: "easeOut" },
+  },
+};
+
+const fadeUp = {
+  hidden: { opacity: 0, y: 16 },
+  show: {
+    opacity: 1,
+    y: 0,
+    transition: { duration: 0.32, ease: "easeOut" },
+  },
+};
+
+const fadeRight = {
+  hidden: { opacity: 0, x: 24 },
+  show: {
+    opacity: 1,
+    x: 0,
+    transition: { duration: 0.32, ease: "easeOut" },
+  },
+};
+
+const staggerTabs = {
+  hidden: {},
+  show: {
+    transition: {
+      staggerChildren: 0.05,
+      delayChildren: 0.04,
+    },
+  },
+};
+
+const staggerList = {
+  hidden: {},
+  show: {
+    transition: {
+      staggerChildren: 0.06,
+      delayChildren: 0.05,
+    },
+  },
+};
 
 function getInitials(name = "", email = "") {
   const source = name?.trim() || email?.trim() || "?";
@@ -139,7 +187,9 @@ function MembersPage() {
       } else if (existingRequest.status === "accepted") {
         setMessage("You are already connected.");
       } else {
-        setMessage("A previous request already exists. Update its status instead.");
+        setMessage(
+          "A previous request already exists. Update its status instead."
+        );
       }
       setLoading(false);
       return;
@@ -198,7 +248,8 @@ function MembersPage() {
   const incomingRequests = useMemo(() => {
     if (!user) return [];
     return requests.filter(
-      (request) => request.receiver_id === user.id && request.status === "pending"
+      (request) =>
+        request.receiver_id === user.id && request.status === "pending"
     );
   }, [requests, user]);
 
@@ -216,6 +267,7 @@ function MembersPage() {
       .filter((request) => request.status === "accepted")
       .map((request) => {
         const isSender = request.sender_id === user.id;
+
         return {
           ...request,
           otherUser: isSender ? request.receiver : request.sender,
@@ -241,40 +293,65 @@ function MembersPage() {
     <AppLayout>
       <div className="app-page">
         <div className="app-shell members-shell">
-          <div className="top-bar">
+          <motion.div
+            className="top-bar"
+            variants={fadeDown}
+            initial="hidden"
+            animate="show"
+          >
             <div>
               <h1 className="page-title">Members</h1>
               <p className="page-subtitle">
-                Connect with teammates, manage requests, and view your accepted members.
+                Connect with teammates, manage requests, and view your accepted
+                members.
               </p>
             </div>
-          </div>
+          </motion.div>
 
           <div className="members-tabs-wrap">
-            <div className="members-tabs">
+            <motion.div
+              className="members-tabs"
+              variants={staggerTabs}
+              initial="hidden"
+              animate="show"
+            >
               {MEMBER_TABS.map((tab) => (
-                <button
+                <motion.button
                   key={tab.id}
                   type="button"
-                  className={`members-tab ${activeTab === tab.id ? "active" : ""}`}
+                  className={`members-tab ${
+                    activeTab === tab.id ? "active" : ""
+                  }`}
                   onClick={() => setActiveTab(tab.id)}
+                  variants={fadeRight}
+                  whileHover={{ y: -2 }}
+                  whileTap={{ scale: 0.98 }}
                 >
                   {tab.label}
+
                   {tab.id === "accepted" && (
-                    <span className="members-tab-count">{acceptedConnections.length}</span>
+                    <span className="members-tab-count">
+                      {acceptedConnections.length}
+                    </span>
                   )}
+
                   {tab.id === "requests" && totalRequests > 0 && (
                     <span className="members-tab-count">{totalRequests}</span>
                   )}
-                </button>
+                </motion.button>
               ))}
-            </div>
+            </motion.div>
           </div>
 
           {message && <p className="message">{message}</p>}
 
           {activeTab === "accepted" && (
-            <div className="members-tab-panel">
+            <motion.div
+              className="members-tab-panel"
+              variants={fadeUp}
+              initial="hidden"
+              animate="show"
+            >
               <div className="card section-card members-hero-card">
                 <div className="members-hero-top">
                   <div>
@@ -301,15 +378,27 @@ function MembersPage() {
                   <div className="members-empty-state">
                     <h3>No members yet</h3>
                     <p className="muted">
-                      Accepted connections will appear here once requests are approved.
+                      Accepted connections will appear here once requests are
+                      approved.
                     </p>
                   </div>
                 ) : (
-                  <div className="members-card-list">
+                  <motion.div
+                    className="members-card-list"
+                    variants={staggerList}
+                    initial="hidden"
+                    animate="show"
+                  >
                     {filteredAcceptedConnections.map((connection) => {
                       const person = connection.otherUser;
+
                       return (
-                        <div key={connection.id} className="members-person-card">
+                        <motion.div
+                          key={connection.id}
+                          className="members-person-card"
+                          variants={fadeRight}
+                          whileHover={{ y: -3, scale: 1.005 }}
+                        >
                           <div className="members-person-main">
                             <div className="members-avatar">
                               {getInitials(person?.full_name, person?.email)}
@@ -318,7 +407,9 @@ function MembersPage() {
                             <div className="members-person-info">
                               <h3>{person?.full_name || "No name"}</h3>
                               <p>{person?.email}</p>
-                              <span className="members-presence offline">Connected</span>
+                              <span className="members-presence offline">
+                                Connected
+                              </span>
                             </div>
                           </div>
 
@@ -331,28 +422,42 @@ function MembersPage() {
                               Remove Connection
                             </button>
                           </div>
-                        </div>
+                        </motion.div>
                       );
                     })}
-                  </div>
+                  </motion.div>
                 )}
               </div>
-            </div>
+            </motion.div>
           )}
 
           {activeTab === "find" && (
-            <div className="members-tab-panel">
+            <motion.div
+              className="members-tab-panel"
+              variants={fadeUp}
+              initial="hidden"
+              animate="show"
+            >
               <div className="members-find-layout">
-                <div className="card section-card members-find-card">
+                <motion.div
+                  className="card section-card members-find-card"
+                  variants={fadeUp}
+                  initial="hidden"
+                  animate="show"
+                >
                   <div className="members-find-icon">✉</div>
 
                   <div className="members-find-content">
                     <h2 className="members-section-title">Search by Email</h2>
                     <p className="muted members-section-subtitle">
-                      Find and send a member request using their registered email address.
+                      Find and send a member request using their registered
+                      email address.
                     </p>
 
-                    <form onSubmit={handleSendRequest} className="form members-inline-form">
+                    <form
+                      onSubmit={handleSendRequest}
+                      className="form members-inline-form"
+                    >
                       <input
                         type="email"
                         name="email"
@@ -368,9 +473,14 @@ function MembersPage() {
                       </button>
                     </form>
                   </div>
-                </div>
+                </motion.div>
 
-                <div className="card section-card members-stats-card">
+                <motion.div
+                  className="card section-card members-stats-card"
+                  variants={fadeRight}
+                  initial="hidden"
+                  animate="show"
+                >
                   <h2 className="members-section-title">Connection Summary</h2>
 
                   <div className="member-summary-grid members-summary-grid-large">
@@ -378,24 +488,36 @@ function MembersPage() {
                       <p className="member-summary-label">Accepted</p>
                       <h3>{acceptedConnections.length}</h3>
                     </div>
+
                     <div className="member-summary-card">
                       <p className="member-summary-label">Incoming</p>
                       <h3>{incomingRequests.length}</h3>
                     </div>
+
                     <div className="member-summary-card">
                       <p className="member-summary-label">Outgoing</p>
                       <h3>{outgoingRequests.length}</h3>
                     </div>
                   </div>
-                </div>
+                </motion.div>
               </div>
-            </div>
+            </motion.div>
           )}
 
           {activeTab === "requests" && (
-            <div className="members-tab-panel">
+            <motion.div
+              className="members-tab-panel"
+              variants={fadeUp}
+              initial="hidden"
+              animate="show"
+            >
               <div className="members-requests-grid">
-                <div className="card section-card">
+                <motion.div
+                  className="card section-card"
+                  variants={fadeUp}
+                  initial="hidden"
+                  animate="show"
+                >
                   <h2 className="members-section-title">Incoming Requests</h2>
                   <p className="muted members-section-subtitle">
                     Requests sent to you waiting for action.
@@ -407,9 +529,19 @@ function MembersPage() {
                       <p className="muted">You're all caught up.</p>
                     </div>
                   ) : (
-                    <div className="members-request-list">
+                    <motion.div
+                      className="members-request-list"
+                      variants={staggerList}
+                      initial="hidden"
+                      animate="show"
+                    >
                       {incomingRequests.map((request) => (
-                        <div key={request.id} className="members-request-card">
+                        <motion.div
+                          key={request.id}
+                          className="members-request-card"
+                          variants={fadeRight}
+                          whileHover={{ y: -3, scale: 1.005 }}
+                        >
                           <div className="members-request-user">
                             <div className="members-avatar">
                               {getInitials(
@@ -428,25 +560,35 @@ function MembersPage() {
                             <button
                               type="button"
                               className="btn"
-                              onClick={() => handleUpdateRequest(request.id, "accepted")}
+                              onClick={() =>
+                                handleUpdateRequest(request.id, "accepted")
+                              }
                             >
                               Accept
                             </button>
+
                             <button
                               type="button"
                               className="btn btn-secondary"
-                              onClick={() => handleUpdateRequest(request.id, "rejected")}
+                              onClick={() =>
+                                handleUpdateRequest(request.id, "rejected")
+                              }
                             >
                               Reject
                             </button>
                           </div>
-                        </div>
+                        </motion.div>
                       ))}
-                    </div>
+                    </motion.div>
                   )}
-                </div>
+                </motion.div>
 
-                <div className="card section-card">
+                <motion.div
+                  className="card section-card"
+                  variants={fadeRight}
+                  initial="hidden"
+                  animate="show"
+                >
                   <h2 className="members-section-title">Outgoing Requests</h2>
                   <p className="muted members-section-subtitle">
                     Requests you have already sent.
@@ -455,12 +597,24 @@ function MembersPage() {
                   {outgoingRequests.length === 0 ? (
                     <div className="members-empty-state compact">
                       <h3>No outgoing requests</h3>
-                      <p className="muted">Pending requests will appear here.</p>
+                      <p className="muted">
+                        Pending requests will appear here.
+                      </p>
                     </div>
                   ) : (
-                    <div className="members-request-list">
+                    <motion.div
+                      className="members-request-list"
+                      variants={staggerList}
+                      initial="hidden"
+                      animate="show"
+                    >
                       {outgoingRequests.map((request) => (
-                        <div key={request.id} className="members-request-card">
+                        <motion.div
+                          key={request.id}
+                          className="members-request-card"
+                          variants={fadeRight}
+                          whileHover={{ y: -3, scale: 1.005 }}
+                        >
                           <div className="members-request-user">
                             <div className="members-avatar">
                               {getInitials(
@@ -484,13 +638,13 @@ function MembersPage() {
                               Cancel Request
                             </button>
                           </div>
-                        </div>
+                        </motion.div>
                       ))}
-                    </div>
+                    </motion.div>
                   )}
-                </div>
+                </motion.div>
               </div>
-            </div>
+            </motion.div>
           )}
         </div>
       </div>

@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { motion } from "framer-motion";
 import { useNavigate, useParams } from "react-router-dom";
 import { supabase } from "../lib/supabaseClient";
 import AppLayout from "../components/AppLayout";
@@ -16,6 +17,61 @@ const COLUMN_CONFIG = [
   { id: "In Progress", title: "In Progress" },
   { id: "Done", title: "Done" },
 ];
+
+const fadeDown = {
+  hidden: { opacity: 0, y: -14 },
+  show: {
+    opacity: 1,
+    y: 0,
+    transition: { duration: 0.3, ease: "easeOut" },
+  },
+};
+
+const fadeUp = {
+  hidden: { opacity: 0, y: 16 },
+  show: {
+    opacity: 1,
+    y: 0,
+    transition: { duration: 0.32, ease: "easeOut" },
+  },
+};
+
+const fadeRight = {
+  hidden: { opacity: 0, x: 24 },
+  show: {
+    opacity: 1,
+    x: 0,
+    transition: { duration: 0.32, ease: "easeOut" },
+  },
+};
+
+const staggerColumns = {
+  hidden: {},
+  show: {
+    transition: {
+      staggerChildren: 0.08,
+      delayChildren: 0.05,
+    },
+  },
+};
+
+function canCurrentUserMoveTask(task, currentUserId, projectOwnerId) {
+  const isOwner = currentUserId === projectOwnerId;
+  const isMine = task.assigned_to === currentUserId;
+  const isUnassigned = !task.assigned_to;
+
+  if (isOwner) return true;
+  if (isMine) return true;
+  if (isUnassigned) return true;
+
+  return false;
+}
+
+function getTaskOwnershipState(task, currentUserId) {
+  if (!task.assigned_to) return "unassigned";
+  if (task.assigned_to === currentUserId) return "mine";
+  return "other";
+}
 
 function SortableTaskCard({
   task,
@@ -57,11 +113,16 @@ function SortableTaskCard({
   };
 
   return (
-    <div
+    <motion.div
       ref={setNodeRef}
       style={style}
-      className={`project-task-card task-theme-${projectColor} project-task-${ownershipState} ${isDragging ? "dragging-task" : ""
-        } ${!canDrag ? "project-task-locked" : ""}`}
+      className={`project-task-card task-theme-${projectColor} project-task-${ownershipState} ${
+        isDragging ? "dragging-task" : ""
+      } ${!canDrag ? "project-task-locked" : ""}`}
+      initial={{ opacity: 0, x: 18 }}
+      animate={{ opacity: 1, x: 0 }}
+      transition={{ duration: 0.25, ease: "easeOut" }}
+      whileHover={{ y: -2 }}
     >
       <div className="task-color-bar"></div>
 
@@ -101,22 +162,25 @@ function SortableTaskCard({
 
         <div className="project-task-badges">
           <span className="task-status-badge">{task.status}</span>
+
           <span className={`task-priority-badge ${getPriorityClass(task.priority)}`}>
             {task.priority}
           </span>
+
           <span className="task-date-badge">
             Due: {task.due_date || "No due date"}
           </span>
+
           <span className={`task-member-badge task-member-badge-${ownershipState}`}>
             {ownershipState === "mine"
               ? "Assigned to me"
               : ownershipState === "unassigned"
-                ? "Unassigned"
-                : `Assigned to ${getAssignedMemberLabel(task.assigned_to)}`}
+              ? "Unassigned"
+              : `Assigned to ${getAssignedMemberLabel(task.assigned_to)}`}
           </span>
         </div>
       </div>
-    </div>
+    </motion.div>
   );
 }
 
@@ -126,9 +190,11 @@ function DroppableColumn({ title, columnId, tasks, children, onCreateTask }) {
   });
 
   return (
-    <div
+    <motion.div
       ref={setNodeRef}
       className={`card board-column ${isOver ? "board-column-active" : ""}`}
+      variants={fadeUp}
+      whileHover={{ y: -2 }}
     >
       <div className="board-title-row">
         <h2 className="board-title">{title}</h2>
@@ -145,26 +211,8 @@ function DroppableColumn({ title, columnId, tasks, children, onCreateTask }) {
           Create Task
         </button>
       )}
-    </div>
+    </motion.div>
   );
-}
-
-function canCurrentUserMoveTask(task, currentUserId, projectOwnerId) {
-  const isOwner = currentUserId === projectOwnerId;
-  const isMine = task.assigned_to === currentUserId;
-  const isUnassigned = !task.assigned_to;
-
-  if (isOwner) return true;
-  if (isMine) return true;
-  if (isUnassigned) return true;
-
-  return false;
-}
-
-function getTaskOwnershipState(task, currentUserId) {
-  if (!task.assigned_to) return "unassigned";
-  if (task.assigned_to === currentUserId) return "mine";
-  return "other";
 }
 
 function ProjectDetailsPage() {
@@ -309,7 +357,11 @@ function ProjectDetailsPage() {
 
     const draggedTask = tasks.find((task) => task.id === activeTaskId);
 
-    if (!draggedTask || !destinationStatus || draggedTask.status === destinationStatus) {
+    if (
+      !draggedTask ||
+      !destinationStatus ||
+      draggedTask.status === destinationStatus
+    ) {
       return;
     }
 
@@ -335,6 +387,10 @@ function ProjectDetailsPage() {
     navigate(`/projects/${projectId}/tasks/new`);
   };
 
+  const handleEditProjectPage = () => {
+    navigate(`/projects/${projectId}/edit`);
+  };
+
   const getAssignedMemberLabel = (assignedToId) => {
     if (!assignedToId) return "Unassigned";
 
@@ -352,27 +408,27 @@ function ProjectDetailsPage() {
   const getProjectColor = () => {
     return project?.color || "purple";
   };
-  const handleEditProjectPage = () => {
-  navigate(`/projects/${projectId}/edit`);
-};
 
   const taskCount = tasks.length;
   const doneCount = tasks.filter((task) => task.status === "Done").length;
-  const progress = taskCount === 0 ? 0 : Math.round((doneCount / taskCount) * 100);
+  const progress =
+    taskCount === 0 ? 0 : Math.round((doneCount / taskCount) * 100);
 
   return (
     <AppLayout
       rightSidebar={
-        <DashboardNotesSidebar
-          title="Project Notes"
-          projectId={projectId}
-        />
+        <DashboardNotesSidebar title="Project Notes" projectId={projectId} />
       }
       defaultRightSidebarCollapsed={true}
     >
       <div className="app-page">
         <div className="app-shell">
-          <div className="top-bar">
+          <motion.div
+            className="top-bar"
+            variants={fadeDown}
+            initial="hidden"
+            animate="show"
+          >
             <div>
               <h1 className="page-title">Project Details</h1>
             </div>
@@ -389,15 +445,22 @@ function ProjectDetailsPage() {
                 New Task
               </button>
             </div>
-          </div>
+          </motion.div>
 
           {project && (
-            <div
-              className={`project-details-summary-card project-theme-${project.color || "purple"}`}
+            <motion.div
+              className={`project-details-summary-card project-theme-${
+                project.color || "purple"
+              }`}
+              variants={fadeUp}
+              initial="hidden"
+              animate="show"
             >
               <div className="project-details-summary-top">
                 <div>
-                  <h2 className="project-details-summary-title">{project.name}</h2>
+                  <h2 className="project-details-summary-title">
+                    {project.name}
+                  </h2>
                   <p className="project-details-summary-description">
                     {project.description || "No description"}
                   </p>
@@ -424,11 +487,18 @@ function ProjectDetailsPage() {
                 ></div>
               </div>
 
-              <p className="project-details-progress-text">{progress}% Completed</p>
-            </div>
+              <p className="project-details-progress-text">
+                {progress}% Completed
+              </p>
+            </motion.div>
           )}
 
-          <div className="project-members-dropdown card section-card">
+          <motion.div
+            className="project-members-dropdown card section-card"
+            variants={fadeUp}
+            initial="hidden"
+            animate="show"
+          >
             <details>
               <summary className="project-members-summary">
                 <span>View project members</span>
@@ -442,7 +512,8 @@ function ProjectDetailsPage() {
                   members.map((member) => (
                     <div key={member.id} className="member-item">
                       <p>
-                        <strong>Name:</strong> {member.profiles?.full_name || "No name"}
+                        <strong>Name:</strong>{" "}
+                        {member.profiles?.full_name || "No name"}
                       </p>
                       <p>
                         <strong>Email:</strong> {member.profiles?.email}
@@ -455,12 +526,17 @@ function ProjectDetailsPage() {
                 )}
               </div>
             </details>
-          </div>
+          </motion.div>
 
           {message && <p className="message">{message}</p>}
 
           <DndContext collisionDetection={closestCorners} onDragEnd={handleDragEnd}>
-            <div className="board">
+            <motion.div
+              className="board"
+              variants={staggerColumns}
+              initial="hidden"
+              animate="show"
+            >
               {COLUMN_CONFIG.map((column) => {
                 const columnTasks = tasks.filter((task) => task.status === column.id);
 
@@ -491,7 +567,7 @@ function ProjectDetailsPage() {
                   </DroppableColumn>
                 );
               })}
-            </div>
+            </motion.div>
           </DndContext>
         </div>
       </div>
