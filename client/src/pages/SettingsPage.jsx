@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import AppLayout from "../components/AppLayout";
 
@@ -65,9 +65,16 @@ function SettingsToggle({ label, description, checked, onChange }) {
 function SettingsPage() {
   const [emailNotifications, setEmailNotifications] = useState(true);
   const [taskReminders, setTaskReminders] = useState(true);
-  const [darkMode, setDarkMode] = useState(true);
-  const [compactMode, setCompactMode] = useState(false);
+  const [darkMode, setDarkMode] = useState(() => {
+    const savedTheme = localStorage.getItem("theme");
+    return savedTheme ? savedTheme === "dark" : true;
+  }); const [compactMode, setCompactMode] = useState(false);
+  useEffect(() => {
+    const theme = darkMode ? "dark" : "light";
 
+    document.body.setAttribute("data-theme", theme);
+    localStorage.setItem("theme", theme);
+  }, [darkMode]);
   return (
     <AppLayout>
       <div className="app-page">

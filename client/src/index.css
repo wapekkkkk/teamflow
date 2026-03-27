@@ -17,6 +17,23 @@
   --radius: 14px;
 }
 
+
+body[data-theme="light"] {
+  --bg-main: #f3f4f6;
+  --bg-surface: #ffffff;
+  --bg-card: #ffffff;
+  --bg-card-soft: #e5e7eb;
+  --border: #d1d5db;
+  --text-main: #111827;
+  --text-soft: #6b7280;
+  --primary: #2563eb;
+  --primary-hover: #1d4ed8;
+  --success: #16a34a;
+  --warning: #d97706;
+  --danger: #dc2626;
+  --shadow: 0 10px 25px rgba(15, 23, 42, 0.08);
+}
+
 *,
 *::before,
 *::after {
@@ -36,6 +53,10 @@ body,
 
 body {
   background: linear-gradient(180deg, #0b1220 0%, #0f172a 100%);
+
+  background: var(--bg-main);
+  color: var(--text-main);
+  transition: background 0.3s ease, color 0.3s ease;
 }
 
 a {
@@ -135,10 +156,16 @@ button {
 /* ===== Cards ===== */
 
 .card {
-  background: linear-gradient(180deg, rgba(31, 41, 55, 0.96), rgba(17, 24, 39, 0.96));
+  background: var(--bg-card);
   border: 1px solid var(--border);
   border-radius: var(--radius);
   box-shadow: var(--shadow);
+}
+
+body[data-theme="dark"] .card {
+  background: linear-gradient(180deg, rgba(31, 41, 55, 0.96), rgba(17, 24, 39, 0.96));
+  border: 1px solid rgba(148, 163, 184, 0.14);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.22);
 }
 
 .section-card {
@@ -546,14 +573,37 @@ button {
   box-shadow: 0 0 0 4px rgba(255, 255, 255, 0.08);
 }
 
-.color-purple  { background: linear-gradient(135deg, #8b5cf6, #6d28d9); }
-.color-blue    { background: linear-gradient(135deg, #3b82f6, #1d4ed8); }
-.color-red     { background: linear-gradient(135deg, #ef4444, #be123c); }
-.color-green   { background: linear-gradient(135deg, #22c55e, #15803d); }
-.color-orange  { background: linear-gradient(135deg, #f97316, #ea580c); }
-.color-pink    { background: linear-gradient(135deg, #ec4899, #be185d); }
-.color-teal    { background: linear-gradient(135deg, #14b8a6, #0f766e); }
-.color-yellow  { background: linear-gradient(135deg, #eab308, #ca8a04); }
+.color-purple {
+  background: linear-gradient(135deg, #8b5cf6, #6d28d9);
+}
+
+.color-blue {
+  background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+}
+
+.color-red {
+  background: linear-gradient(135deg, #ef4444, #be123c);
+}
+
+.color-green {
+  background: linear-gradient(135deg, #22c55e, #15803d);
+}
+
+.color-orange {
+  background: linear-gradient(135deg, #f97316, #ea580c);
+}
+
+.color-pink {
+  background: linear-gradient(135deg, #ec4899, #be185d);
+}
+
+.color-teal {
+  background: linear-gradient(135deg, #14b8a6, #0f766e);
+}
+
+.color-yellow {
+  background: linear-gradient(135deg, #eab308, #ca8a04);
+}
 
 /* ===== Dashboard ===== */
 
@@ -674,7 +724,13 @@ button {
 .dashboard-mini-column {
   padding: 12px;
   min-height: 220px;
+  background: var(--bg-card);
+}
+
+body[data-theme="dark"] .dashboard-mini-column {
   background: linear-gradient(180deg, rgba(31, 41, 55, 0.96), rgba(17, 24, 39, 0.96));
+  border: 1px solid rgba(148, 163, 184, 0.14);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.22);
 }
 
 .dashboard-mini-column-header {
@@ -876,9 +932,19 @@ button {
 }
 
 /* Task ownership variants */
-.project-task-mine       { border-left: 5px solid #22c55e; box-shadow: inset 0 0 0 1px rgba(34, 197, 94, 0.15); }
-.project-task-other      { border-left: 5px solid #ef4444; box-shadow: inset 0 0 0 1px rgba(239, 68, 68, 0.15); }
-.project-task-locked     { opacity: 0.88; }
+.project-task-mine {
+  border-left: 5px solid #22c55e;
+  box-shadow: inset 0 0 0 1px rgba(34, 197, 94, 0.15);
+}
+
+.project-task-other {
+  border-left: 5px solid #ef4444;
+  box-shadow: inset 0 0 0 1px rgba(239, 68, 68, 0.15);
+}
+
+.project-task-locked {
+  opacity: 0.88;
+}
 
 /* ===== Badges ===== */
 
@@ -907,13 +973,38 @@ button {
   border: 1px solid rgba(255, 255, 255, 0.08);
 }
 
-.priority-high   { background: rgba(239, 68, 68, 0.16);  color: #fca5a5; }
-.priority-medium { background: rgba(245, 158, 11, 0.16); color: #fcd34d; }
-.priority-low    { background: rgba(34, 197, 94, 0.16);  color: #86efac; }
+.priority-high {
+  background: rgba(239, 68, 68, 0.16);
+  color: #fca5a5;
+}
 
-.task-member-badge-mine       { background: rgba(34, 197, 94, 0.18);  color: #86efac; border: 1px solid rgba(34, 197, 94, 0.25); }
-.task-member-badge-unassigned { background: rgba(59, 130, 246, 0.18); color: #93c5fd; border: 1px solid rgba(59, 130, 246, 0.25); }
-.task-member-badge-other      { background: rgba(239, 68, 68, 0.16);  color: #fca5a5; border: 1px solid rgba(239, 68, 68, 0.25); }
+.priority-medium {
+  background: rgba(245, 158, 11, 0.16);
+  color: #fcd34d;
+}
+
+.priority-low {
+  background: rgba(34, 197, 94, 0.16);
+  color: #86efac;
+}
+
+.task-member-badge-mine {
+  background: rgba(34, 197, 94, 0.18);
+  color: #86efac;
+  border: 1px solid rgba(34, 197, 94, 0.25);
+}
+
+.task-member-badge-unassigned {
+  background: rgba(59, 130, 246, 0.18);
+  color: #93c5fd;
+  border: 1px solid rgba(59, 130, 246, 0.25);
+}
+
+.task-member-badge-other {
+  background: rgba(239, 68, 68, 0.16);
+  color: #fca5a5;
+  border: 1px solid rgba(239, 68, 68, 0.25);
+}
 
 /* ===== Status / Filter Buttons ===== */
 
@@ -1137,8 +1228,14 @@ button {
   cursor: default;
 }
 
-.calendar-cell-today    { box-shadow: 0 0 0 1px rgba(59, 130, 246, 0.4); }
-.calendar-cell-selected { background: rgba(59, 130, 246, 0.12); border-color: var(--primary); }
+.calendar-cell-today {
+  box-shadow: 0 0 0 1px rgba(59, 130, 246, 0.4);
+}
+
+.calendar-cell-selected {
+  background: rgba(59, 130, 246, 0.12);
+  border-color: var(--primary);
+}
 
 .calendar-day-number {
   font-size: 0.92rem;
@@ -1196,9 +1293,20 @@ button {
   cursor: pointer;
 }
 
-.calendar-task-card .project-task-content { padding: 14px 16px; }
-.calendar-task-card .project-task-main h3 { margin: 0; font-size: 1rem; line-height: 1.35; }
-.calendar-task-card .project-task-badges  { margin-top: 12px; gap: 8px; }
+.calendar-task-card .project-task-content {
+  padding: 14px 16px;
+}
+
+.calendar-task-card .project-task-main h3 {
+  margin: 0;
+  font-size: 1rem;
+  line-height: 1.35;
+}
+
+.calendar-task-card .project-task-badges {
+  margin-top: 12px;
+  gap: 8px;
+}
 
 /* ===== Right Sidebar / Notes ===== */
 
@@ -1327,8 +1435,14 @@ button {
   word-break: break-word;
 }
 
-.note-card-completed  { opacity: 0.78; }
-.note-text-completed  { text-decoration: line-through; color: var(--text-soft); }
+.note-card-completed {
+  opacity: 0.78;
+}
+
+.note-text-completed {
+  text-decoration: line-through;
+  color: var(--text-soft);
+}
 
 .note-dot {
   width: 24px;
@@ -1620,7 +1734,9 @@ button {
   transition: 0.18s ease;
 }
 
-.members-tab:hover { color: var(--text-main); }
+.members-tab:hover {
+  color: var(--text-main);
+}
 
 .members-tab.active {
   color: #3b82f6;
@@ -1660,8 +1776,16 @@ button {
 .members-find-card,
 .members-stats-card {
   border-radius: 22px;
-  background: linear-gradient(180deg, rgba(21, 31, 49, 0.95) 0%, rgba(24, 36, 56, 0.95) 100%);
+  background: var(--bg-card);
   border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+body[data-theme="dark"] .members-hero-card,
+.members-find-card,
+.members-stats-card {
+  background: linear-gradient(180deg, rgba(31, 41, 55, 0.96), rgba(17, 24, 39, 0.96));
+  border: 1px solid rgba(148, 163, 184, 0.14);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.22);
 }
 
 .members-section-title {
@@ -1762,8 +1886,13 @@ button {
   display: inline-block;
 }
 
-.members-presence.online::before  { background: #22c55e; }
-.members-presence.offline::before { background: #94a3b8; }
+.members-presence.online::before {
+  background: #22c55e;
+}
+
+.members-presence.offline::before {
+  background: #94a3b8;
+}
 
 .members-person-actions {
   display: flex;
@@ -1923,6 +2052,12 @@ button {
 .settings-card {
   padding: 20px 22px;
   border-radius: 20px;
+  background: var(--bg-card);
+  border: 1px solid rgba(148, 163, 184, 0.14);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.22);
+}
+
+body[data-theme="dark"] .settings-card {
   background: linear-gradient(180deg, rgba(31, 41, 55, 0.96), rgba(17, 24, 39, 0.96));
   border: 1px solid rgba(148, 163, 184, 0.14);
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.22);
@@ -2027,42 +2162,106 @@ button {
 
 /* ===== Project & Task Theme Colors ===== */
 
-.project-theme-purple { background: linear-gradient(135deg, rgba(139, 92, 246, 0.34), rgba(109, 40, 217, 0.18)); }
-.project-theme-blue   { background: linear-gradient(135deg, rgba(59, 130, 246, 0.34), rgba(29, 78, 216, 0.18)); }
-.project-theme-red    { background: linear-gradient(135deg, rgba(239, 68, 68, 0.34), rgba(190, 18, 60, 0.18)); }
-.project-theme-green  { background: linear-gradient(135deg, rgba(34, 197, 94, 0.34), rgba(21, 128, 61, 0.18)); }
-.project-theme-orange { background: linear-gradient(135deg, rgba(249, 115, 22, 0.34), rgba(234, 88, 12, 0.18)); }
-.project-theme-pink   { background: linear-gradient(135deg, rgba(236, 72, 153, 0.34), rgba(190, 24, 93, 0.18)); }
-.project-theme-teal   { background: linear-gradient(135deg, rgba(20, 184, 166, 0.34), rgba(15, 118, 110, 0.18)); }
-.project-theme-yellow { background: linear-gradient(135deg, rgba(234, 179, 8, 0.34), rgba(202, 138, 4, 0.18)); }
+.project-theme-purple {
+  background: linear-gradient(135deg, rgba(139, 92, 246, 0.34), rgba(109, 40, 217, 0.18));
+}
 
-.task-theme-purple .task-color-bar, .task-theme-purple .task-status-badge, .calendar-task-chip.task-theme-purple,
-.calendar-task-dot.task-theme-purple { background: #8b5cf6; color: white; }
+.project-theme-blue {
+  background: linear-gradient(135deg, rgba(59, 130, 246, 0.34), rgba(29, 78, 216, 0.18));
+}
 
-.task-theme-blue .task-color-bar, .task-theme-blue .task-status-badge, .calendar-task-chip.task-theme-blue,
-.calendar-task-dot.task-theme-blue { background: #3b82f6; color: white; }
+.project-theme-red {
+  background: linear-gradient(135deg, rgba(239, 68, 68, 0.34), rgba(190, 18, 60, 0.18));
+}
 
-.task-theme-red .task-color-bar, .task-theme-red .task-status-badge, .calendar-task-chip.task-theme-red,
-.calendar-task-dot.task-theme-red { background: #ef4444; color: white; }
+.project-theme-green {
+  background: linear-gradient(135deg, rgba(34, 197, 94, 0.34), rgba(21, 128, 61, 0.18));
+}
 
-.task-theme-green .task-color-bar, .task-theme-green .task-status-badge, .calendar-task-chip.task-theme-green,
-.calendar-task-dot.task-theme-green { background: #22c55e; color: white; }
+.project-theme-orange {
+  background: linear-gradient(135deg, rgba(249, 115, 22, 0.34), rgba(234, 88, 12, 0.18));
+}
 
-.task-theme-orange .task-color-bar, .task-theme-orange .task-status-badge, .calendar-task-chip.task-theme-orange,
-.calendar-task-dot.task-theme-orange { background: #f97316; color: white; }
+.project-theme-pink {
+  background: linear-gradient(135deg, rgba(236, 72, 153, 0.34), rgba(190, 24, 93, 0.18));
+}
 
-.task-theme-pink .task-color-bar, .task-theme-pink .task-status-badge, .calendar-task-chip.task-theme-pink,
-.calendar-task-dot.task-theme-pink { background: #ec4899; color: white; }
+.project-theme-teal {
+  background: linear-gradient(135deg, rgba(20, 184, 166, 0.34), rgba(15, 118, 110, 0.18));
+}
 
-.task-theme-teal .task-color-bar, .task-theme-teal .task-status-badge, .calendar-task-chip.task-theme-teal,
-.calendar-task-dot.task-theme-teal { background: #14b8a6; color: white; }
+.project-theme-yellow {
+  background: linear-gradient(135deg, rgba(234, 179, 8, 0.34), rgba(202, 138, 4, 0.18));
+}
 
-.task-theme-yellow .task-color-bar, .task-theme-yellow .task-status-badge, .calendar-task-chip.task-theme-yellow,
-.calendar-task-dot.task-theme-yellow { background: #eab308; color: #111827; }
+.task-theme-purple .task-color-bar,
+.task-theme-purple .task-status-badge,
+.calendar-task-chip.task-theme-purple,
+.calendar-task-dot.task-theme-purple {
+  background: #8b5cf6;
+  color: white;
+}
+
+.task-theme-blue .task-color-bar,
+.task-theme-blue .task-status-badge,
+.calendar-task-chip.task-theme-blue,
+.calendar-task-dot.task-theme-blue {
+  background: #3b82f6;
+  color: white;
+}
+
+.task-theme-red .task-color-bar,
+.task-theme-red .task-status-badge,
+.calendar-task-chip.task-theme-red,
+.calendar-task-dot.task-theme-red {
+  background: #ef4444;
+  color: white;
+}
+
+.task-theme-green .task-color-bar,
+.task-theme-green .task-status-badge,
+.calendar-task-chip.task-theme-green,
+.calendar-task-dot.task-theme-green {
+  background: #22c55e;
+  color: white;
+}
+
+.task-theme-orange .task-color-bar,
+.task-theme-orange .task-status-badge,
+.calendar-task-chip.task-theme-orange,
+.calendar-task-dot.task-theme-orange {
+  background: #f97316;
+  color: white;
+}
+
+.task-theme-pink .task-color-bar,
+.task-theme-pink .task-status-badge,
+.calendar-task-chip.task-theme-pink,
+.calendar-task-dot.task-theme-pink {
+  background: #ec4899;
+  color: white;
+}
+
+.task-theme-teal .task-color-bar,
+.task-theme-teal .task-status-badge,
+.calendar-task-chip.task-theme-teal,
+.calendar-task-dot.task-theme-teal {
+  background: #14b8a6;
+  color: white;
+}
+
+.task-theme-yellow .task-color-bar,
+.task-theme-yellow .task-status-badge,
+.calendar-task-chip.task-theme-yellow,
+.calendar-task-dot.task-theme-yellow {
+  background: #eab308;
+  color: #111827;
+}
 
 /* ===== Responsive ===== */
 
 @media (max-width: 1200px) {
+
   .calendar-layout,
   .calendar-layout-narrow-side,
   .dashboard-mini-board {
@@ -2071,6 +2270,7 @@ button {
 }
 
 @media (max-width: 1100px) {
+
   .app-layout,
   .app-layout.has-right-sidebar {
     grid-template-columns: 1fr;
@@ -2134,6 +2334,7 @@ button {
 }
 
 @media (max-width: 800px) {
+
   .calendar-grid,
   .calendar-weekdays {
     gap: 6px;
@@ -2187,6 +2388,7 @@ button {
 }
 
 @media (max-width: 700px) {
+
   .dashboard-search,
   .all-tasks-search-wrap {
     max-width: 100%;
