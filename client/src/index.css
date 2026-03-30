@@ -22,7 +22,7 @@
 body[data-theme="light"] {
   --bg-main: #f0f3fa;
   --bg-surface: #ffffff;
-  --bg-card:linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(243, 244, 246, 0.96));
+  --bg-card: linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(243, 244, 246, 0.96));
   --bg-task-card: #e5e7eb;
   --bg-sidebar: #c4c4c4;
   --border: #d1d5db;
@@ -646,14 +646,20 @@ button {
   height: 8px;
 }
 
+
 .dashboard-project-scroll::-webkit-scrollbar-track {
-  background: rgba(255, 255, 255, 0.06);
+  background: rgba(221, 11, 11, 0.06);
   border-radius: 999px;
 }
 
+
 .dashboard-project-scroll::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.18);
+  background: rgba(115, 115, 115, 0.18);
   border-radius: 999px;
+}
+
+body[data-theme="light"] .dashboard-project-scroll::-webkit-scrollbar-thumb {
+  background: rgba(100, 100, 100, 0.551);
 }
 
 .dashboard-project-card {
@@ -964,15 +970,24 @@ body[data-theme="light"] .dashboard-project-top h3 {
 .task-date-badge,
 .task-member-badge,
 .task-project-badge {
-  background: rgba(255, 255, 255, 0.06);
+  background: rgba(255, 255, 255, 0);
   color: var(--text-main);
   border: 1px solid rgba(255, 255, 255, 0.08);
 }
 
-body[data-theme="light"] .task-date-badge,
-.task-member-badge,
-.task-project-badge {
-  background: rgba(255, 255, 255, 0.855)
+body[data-theme="light"] .task-date-badge
+ {
+  background: rgba(255, 255, 255, 0.582);
+border: 1px solid rgba(107, 107, 107, 0.293);
+}
+
+body[data-theme="light"] .task-member-badge {
+  background: rgba(255, 255, 255, 0.582);
+border: 1px solid rgba(107, 107, 107, 0.293);
+}
+body[data-theme="light"] .task-project-badge {
+  background: rgba(255, 255, 255, 0.582);
+border: 1px solid rgba(107, 107, 107, 0.293);
 }
 
 .task-priority-badge {
@@ -1014,25 +1029,29 @@ body[data-theme="light"] .priority-low {
   color: #86efac;
   border: 1px solid rgba(34, 197, 94, 0.25);
 }
+
 body[data-theme="light"] .task-member-badge-mine {
   background: rgba(34, 197, 94, 0.16);
   color: #02c005;
 }
 
 .task-member-badge-unassigned {
-  background: rgba(59, 130, 246, 0.18);
+  background: rgba(59, 131, 246, 0.304);
   color: #93c5fd;
   border: 1px solid rgba(59, 130, 246, 0.25);
 }
+
 body[data-theme="light"] .task-member-badge-unassigned {
   background: rgba(59, 130, 246, 0.18);
   color: #1281ff;
 }
+
 .task-member-badge-other {
   background: rgba(239, 68, 68, 0.16);
   color: #fca5a5;
   border: 1px solid rgba(239, 68, 68, 0.25);
 }
+
 body[data-theme="light"] .task-member-badge-other {
   background: rgba(239, 68, 68, 0.404);
   color: #ff0000;
@@ -1139,7 +1158,7 @@ body[data-theme="light"] .task-member-badge-other {
 .task-project-badge-button {
   cursor: pointer;
   transition: 0.18s ease;
-  background: rgba(151, 151, 151, 0.645);
+  background: rgba(151, 151, 151, 0);
   color: var(--text-main);
   border: 1px solid rgba(255, 255, 255, 0.08);
 }
@@ -1160,6 +1179,15 @@ body[data-theme="light"] .task-member-badge-other {
 .task-details-actions {
   display: flex;
   gap: 12px;
+  flex-wrap: wrap;
+}
+
+.task-details-card-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 14px;
+  margin-bottom: 18px;
   flex-wrap: wrap;
 }
 
@@ -1706,7 +1734,7 @@ body[data-theme="light"] .task-member-badge-other {
   margin-top: 0;
 }
 
-/* ===== Create Forms ===== */
+/* ===== Create/Edit Forms ===== */
 
 .create-project-card,
 .create-task-card {
@@ -1716,7 +1744,15 @@ body[data-theme="light"] .task-member-badge-other {
 .create-project-actions {
   display: flex;
   justify-content: center;
+  gap: 12px;
+  flex-wrap: wrap;
   margin-top: 10px;
+}
+
+.edit-task-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
 }
 
 /* ===== Empty State ===== */
@@ -2668,6 +2704,10 @@ body[data-theme="light"] .project-theme-yellow {
   .settings-row {
     align-items: flex-start;
   }
+}
+
+.edit-task-grid {
+  grid-template-columns: 1fr;
 }
 
 @media (max-width: 800px) {

@@ -217,6 +217,36 @@ function EditProjectPage() {
     setLoading(false);
     navigate(`/projects/${projectId}`);
   };
+  const handleDeleteProject = async () => {
+    if (!user || !project) {
+      setMessage("Project data not found.");
+      return;
+    }
+
+    const confirmed = window.confirm(
+      `Are you sure you want to delete "${project.name}"?\n\nThis will permanently remove the project, its tasks, and its members.`
+    );
+
+    if (!confirmed) return;
+
+    setLoading(true);
+    setMessage("");
+
+    const { error } = await supabase
+      .from("projects")
+      .delete()
+      .eq("id", projectId)
+      .eq("owner_id", user.id);
+
+    if (error) {
+      setMessage(error.message);
+      setLoading(false);
+      return;
+    }
+
+    setLoading(false);
+    navigate("/projects");
+  };
 
   if (pageLoading) {
     return (
@@ -345,9 +375,8 @@ function EditProjectPage() {
                     <button
                       key={color}
                       type="button"
-                      className={`color-circle color-${color} ${
-                        formData.color === color ? "selected" : ""
-                      }`}
+                      className={`color-circle color-${color} ${formData.color === color ? "selected" : ""
+                        }`}
                       onClick={() => handleColorSelect(color)}
                       aria-label={`Choose ${color} color`}
                     />
@@ -358,6 +387,15 @@ function EditProjectPage() {
               <div className="create-project-actions">
                 <button type="submit" disabled={loading} className="btn">
                   {loading ? "Saving..." : "Save Project Changes"}
+                </button>
+
+                <button
+                  type="button"
+                  disabled={loading}
+                  className="btn btn-danger"
+                  onClick={handleDeleteProject}
+                >
+                  {loading ? "Processing..." : "Delete Project"}
                 </button>
               </div>
             </form>

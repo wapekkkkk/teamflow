@@ -10,6 +10,7 @@ import ProjectDetailsPage from "./pages/ProjectDetailsPage";
 import CreateTaskPage from "./pages/CreateTaskPage";
 import AllTasksPage from "./pages/AllTasksPage";
 import TaskDetailsPage from "./pages/TaskDetailsPage";
+import EditTaskPage from "./pages/EditTaskPage";
 import CalendarPage from "./pages/CalendarPage";
 import SettingsPage from "./pages/SettingsPage";
 import ProfilePage from "./pages/ProfilePage";
@@ -48,6 +49,7 @@ function AnimatedAppRoutes() {
         <Route path="/members" element={<PageWrapper><MembersPage /></PageWrapper>} />
         <Route path="/tasks" element={<PageWrapper><AllTasksPage /></PageWrapper>} />
         <Route path="/tasks/:taskId" element={<PageWrapper><TaskDetailsPage /></PageWrapper>} />
+        <Route path="/tasks/:taskId/edit" element={<EditTaskPage />} />
         <Route path="/calendar" element={<PageWrapper><CalendarPage /></PageWrapper>} />
         <Route path="/settings" element={<PageWrapper><SettingsPage /></PageWrapper>} />
         <Route path="/profile" element={<PageWrapper><ProfilePage /></PageWrapper>} />
