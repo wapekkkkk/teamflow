@@ -1551,6 +1551,7 @@ body[data-theme="light"] .task-member-badge-other {
   background: rgba(255, 255, 255, 0.16);
   overflow: hidden;
   margin-top: 10px;
+  margin-bottom: 5px;
 }
 
 .project-progress-fill {
